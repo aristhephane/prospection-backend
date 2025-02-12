@@ -1,0 +1,19 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+    <h2>Mes notifications</h2>
+
+    {% if notifications is empty %}
+        <p>Aucune nouvelle notification.</p>
+    {% else %}
+        <ul>
+            {% for notification in notifications %}
+                <li>
+                    {{ notification.message }} - {{ notification.dateCreated|date('d/m/Y H:i') }}
+                    <a href="{{ path('notification_mark_read', {id: notification.id}) }}">✅ Marquer comme lue</a>
+                    <a href="{{ path('notification_delete', {id: notification.id}) }}">❌ Supprimer</a>
+                </li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+{% endblock %}

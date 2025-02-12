@@ -1,0 +1,7 @@
+<h1>Historique des Modifications</h1>
+
+<ul>
+    {% for modification in dernieresModifications %}
+        <li>{{ modification.dateModification|date("d/m/Y H:i") }} - {{ modification.detailsModification }}</li>
+    {% endfor %}
+</ul>

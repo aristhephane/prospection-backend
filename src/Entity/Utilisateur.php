@@ -30,6 +30,11 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(length: 255)]
     private ?string $motDePasse = null;
 
+     /**
+     * @ORM\Column(type="boolean")
+     */
+    private $actif;
+
     // Relation ManyToMany vers Role (côté propriétaire)
     #[ORM\ManyToMany(targetEntity: Role::class)]
     #[ORM\JoinTable(name: 'user_role')] 
@@ -87,6 +92,18 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
     public function eraseCredentials(): void
     {
        
+    }
+
+     public function isActif(): bool
+    {
+        return $this->actif;
+    }
+
+    public function setActif(bool $actif): self
+    {
+        $this->actif = $actif;
+
+        return $this;
     }
 
     // ---------------------------------------------

@@ -1,0 +1,10 @@
+<h1>Tableau de bord</h1>
+<p>Nombre total d'entreprises : {{ stats.nombreEntreprises }}</p>
+<p>Nombre total de fiches entreprises : {{ stats.nombreFiches }}</p>
+
+<h2>Dernières entreprises ajoutées</h2>
+<ul>
+    {% for entreprise in stats.dernieresEntreprises %}
+        <li>{{ entreprise.raisonSociale }} - {{ entreprise.secteurActivite }}</li>
+    {% endfor %}
+</ul>

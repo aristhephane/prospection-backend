@@ -1,0 +1,8 @@
+<h1>Suivi des Prospections Récentes</h1>
+
+<h2>Fiches entreprises créées ces 7 derniers jours</h2>
+<ul>
+    {% for fiche in fichesRecents %}
+        <li>{{ fiche.dateCreation|date("d/m/Y") }} - {{ fiche.entreprise.raisonSociale }}</li>
+    {% endfor %}
+</ul>

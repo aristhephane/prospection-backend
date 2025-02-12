@@ -1,0 +1,25 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+    <h2>Filtrer les entreprises</h2>
+    <form method="get">
+        <input type="text" name="name" placeholder="Nom de l'entreprise" value="{{ filters.nom }}">
+        <input type="text" name="sector" placeholder="Secteur d'activité" value="{{ filters.secteurActivite }}">
+        <input type="text" name="size" placeholder="Taille de l'entreprise" value="{{ filters.tailleEntreprise }}">
+        <input type="date" name="date" value="{{ filters.dateCreation }}">
+        <button type="submit">Rechercher</button>
+    </form>
+
+    <h2>Résultats</h2>
+    {% if pagination|length == 0 %}
+        <p>Aucune entreprise trouvée.</p>
+    {% else %}
+        <ul>
+            {% for entreprise in pagination %}
+                <li>{{ entreprise.raisonSociale }} - {{ entreprise.secteurActivite }} - {{ entreprise.dateCreation|date('d/m/Y') }}</li>
+            {% endfor %}
+        </ul>
+
+        {{ knp_pagination_render(pagination) }}
+    {% endif %}
+{% endblock %}

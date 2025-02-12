@@ -1,0 +1,22 @@
+<h1>Statistiques</h1>
+
+<h2>Répartition par secteur d'activité</h2>
+<ul>
+    {% for secteur, count in secteurs %}
+        <li>{{ secteur }} : {{ count }} entreprises</li>
+    {% endfor %}
+</ul>
+
+<h2>Répartition par taille d'entreprise</h2>
+<ul>
+    {% for taille, count in tailles %}
+        <li>{{ taille }} : {{ count }} entreprises</li>
+    {% endfor %}
+</ul>
+
+<h2>Évolution du nombre de fiches entreprises</h2>
+<ul>
+    {% for fiche in fichesParMois %}
+        <li>Mois {{ fiche.mois }} : {{ fiche.total }} fiches créées</li>
+    {% endfor %}
+</ul>

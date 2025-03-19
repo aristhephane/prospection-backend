@@ -6,6 +6,7 @@ use App\Repository\EntrepriseRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: EntrepriseRepository::class)]
 class Entreprise
@@ -15,26 +16,51 @@ class Entreprise
     #[ORM\Column]
     private ?int $id = null;
 
+    // Raison sociale obligatoire (max 255 caractères)
     #[ORM\Column(length: 255)]
+    #[Assert\NotBlank(message: "La raison sociale est obligatoire.")]
+    #[Assert\Length(max: 255, maxMessage: "La raison sociale ne doit pas dépasser 255 caractères.")]
     private ?string $raisonSociale = null;
 
+    // Adresse obligatoire
     #[ORM\Column(length: 255)]
+    #[Assert\NotBlank(message: "L'adresse est obligatoire.")]
     private ?string $adresse = null;
 
+    // Téléphone obligatoire + format validé
     #[ORM\Column(length: 50)]
+    #[Assert\NotBlank(message: "Le téléphone est obligatoire.")]
+    #[Assert\Regex(
+        pattern: "/^(\+?\d{1,3}[-. ]?)?\d{10}$/",
+        message: "Le numéro de téléphone n'est pas valide.")]
     private ?string $telephone = null;
 
+    // Email valide, optionnel
     #[ORM\Column(length: 100, nullable: true)]
+    #[Assert\Email(message: "Veuillez entrer une adresse e-mail valide.")]
     private ?string $email = null;
 
+    // Secteur d’activité obligatoire
     #[ORM\Column(length: 100)]
+    #[Assert\NotBlank(message: "Le secteur d'activité est obligatoire.")]
     private ?string $secteurActivite = null;
 
+    // Taille entreprise doit être un entier positif, optionnel
     #[ORM\Column(nullable: true)]
+    #[Assert\Positive(message: "La taille de l'entreprise doit être un nombre positif.")]
     private ?int $tailleEntreprise = null;
 
+    // URL valide, optionnel
     #[ORM\Column(length: 255, nullable: true)]
+    #[Assert\Url(message: "Veuillez entrer une URL valide.")]
     private ?string $siteWeb = null;
+
+    /**
+     * @ORM\Column(type="boolean")
+     */
+    // Champ booléen pour archiver l'entreprise
+    #[ORM\Column(type: 'boolean')]
+    private bool $archive = false;
 
     /**
      * Relation OneToMany vers FicheEntreprise (cascade éventuelle).
@@ -50,6 +76,7 @@ class Entreprise
     {
         $this->ficheEntreprise = new ArrayCollection();
     }
+
 
     // ---------------------------------------------
     // Getters & Setters
@@ -137,6 +164,18 @@ class Entreprise
         return $this;
     }
 
+     public function isArchive(): bool
+    {
+        return $this->archive;
+    }
+
+    public function setArchive(bool $archive): self
+    {
+        $this->archive = $archive;
+
+        return $this;
+    }
+
     // ---------------------------------------------
     // Relation OneToMany ficheEntreprise
     // ---------------------------------------------
@@ -161,7 +200,7 @@ class Entreprise
     public function removeFicheEntreprise(FicheEntreprise $ficheEntreprise): static
     {
         if ($this->ficheEntreprise->removeElement($ficheEntreprise)) {
-            // Si la ficheEntrepris est liée à cette entreprise, on l’orphanise
+            // Si la ficheEntrepris est liée à cette entreprise, on l’a rend orphelline
             if ($ficheEntreprise->getEntreprise() === $this) {
                 $ficheEntreprise->setEntreprise(null);
             }

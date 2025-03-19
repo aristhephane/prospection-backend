@@ -1,0 +1,38 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Recherche avancée{% endblock %}
+
+{% block body %}
+    <h1>Résultats de recherche</h1>
+
+    <form method="get" action="{{ path('search_index') }}">
+        <input type="text" name="name" placeholder="Nom de l'entreprise" value="{{ filters.nom }}">
+        <input type="text" name="sector" placeholder="Secteur d'activité" value="{{ filters.secteurActivite }}">
+        <input type="text" name="size" placeholder="Taille de l'entreprise" value="{{ filters.tailleEntreprise }}">
+        <input type="date" name="date" placeholder="Date de création" value="{{ filters.dateCreation }}">
+        <input type="text" name="comment" placeholder="Commentaire" value="{{ filters.commentaires }}">
+        <button type="submit">Rechercher</button>
+    </form>
+
+    <h2>Entreprises</h2>
+    <ul>
+        {% for entreprise in paginationEntreprises %}
+            <li>{{ entreprise.raisonSociale }} - {{ entreprise.secteurActivite }} - {{ entreprise.tailleEntreprise }}</li>
+        {% else %}
+            <li>Aucune entreprise trouvée.</li>
+        {% endfor %}
+    </ul>
+
+    {{ knp_pagination_render(paginationEntreprises) }}
+
+    <h2>Fiches Entreprises</h2>
+    <ul>
+        {% for fiche in paginationFiches %}
+            <li>{{ fiche.entreprise.raisonSociale }} - {{ fiche.dateCreation|date('d/m/Y') }} - {{ fiche.commentaires }}</li>
+        {% else %}
+            <li>Aucune fiche trouvée.</li>
+        {% endfor %}
+    </ul>
+
+    {{ knp_pagination_render(paginationFiches) }}
+{% endblock %}

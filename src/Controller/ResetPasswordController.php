@@ -2,36 +2,81 @@
 
 namespace App\Controller;
 
+use App\Entity\Utilisateur;
+use App\Form\ResetPasswordType;
+use App\Service\ResetPasswordService;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
-use SymfonyCasts\Bundle\ResetPassword\Controller\ResetPasswordControllerTrait;
-use Symfony\Component\HttpFoundation\Request;
 
+#[Route('/reset-password')]
 class ResetPasswordController extends AbstractController
 {
-    use ResetPasswordControllerTrait;
+    private ResetPasswordService $resetPasswordService;
 
-    /**
-     * Affiche et traite le formulaire de demande de réinitialisation du mot de passe.
-     */
-    #[Route('/mot-de-passe/oubli', name: 'app_forgot_password')]
-    public function request(Request $request): Response
+    public function __construct(ResetPasswordService $resetPasswordService)
     {
-        // La méthode request() est gérée par ResetPasswordControllerTrait.
-        // Le bundle fournit déjà un formulaire et une logique de traitement.
-        return $this->render('security/forgot_password.html.twig');
+        $this->resetPasswordService = $resetPasswordService;
     }
 
     /**
-     * Affiche et traite le formulaire de réinitialisation du mot de passe.
+     * Affiche le formulaire pour demander une réinitialisation de mot de passe.
      */
-    #[Route('/mot-de-passe/reset/{token}', name: 'app_reset_password')]
-    public function reset(Request $request, string $token = null): Response
+    #[Route('/', name: 'reset_password_request', methods: ['GET', 'POST'])]
+    public function request(Request $request, EntityManagerInterface $entityManager): Response
     {
-        // La méthode reset() est également gérée par ResetPasswordControllerTrait.
-        return $this->render('security/reset_password.html.twig', [
-            'token' => $token,
+        $form = $this->createForm(ResetPasswordType::class, null, ['reset_request' => true]);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $email = $form->get('email')->getData();
+            $user = $entityManager->getRepository(Utilisateur::class)->findOneBy(['email' => $email]);
+
+            if ($user) {
+                $this->resetPasswordService->sendResetEmail($user);
+                $this->addFlash('success', 'Un e-mail de réinitialisation a été envoyé.');
+            } else {
+                $this->addFlash('error', 'Aucun compte associé à cet e-mail.');
+            }
+
+            return $this->redirectToRoute('security_login');
+        }
+
+        return $this->render('reset_password/request.html.twig', [
+            'form' => $form->createView(),
+        ]);
+    }
+
+    /**
+     * Confirme la réinitialisation avec un token sécurisé.
+     */
+    #[Route('/confirm/{token}', name: 'reset_password_confirm', methods: ['GET', 'POST'])]
+    public function confirm(string $token, Request $request, EntityManagerInterface $entityManager): Response
+    {
+        $user = $entityManager->getRepository(Utilisateur::class)->findOneBy(['resetToken' => $token]);
+
+        if (!$user || $user->getTokenExpiration() < new \DateTime()) {
+            $this->addFlash('error', 'Le lien de réinitialisation est invalide ou expiré.');
+            return $this->redirectToRoute('reset_password_request');
+        }
+
+        $form = $this->createForm(ResetPasswordType::class, null, ['reset_request' => false]);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            try {
+                $this->resetPasswordService->processReset($user, $form->get('plainPassword')->getData());
+                $this->addFlash('success', 'Mot de passe réinitialisé avec succès.');
+                return $this->redirectToRoute('security_login');
+            } catch (\Exception $e) {
+                $this->addFlash('error', 'Erreur lors de la réinitialisation du mot de passe.');
+            }
+        }
+
+        return $this->render('reset_password/confirm.html.twig', [
+            'form' => $form->createView(),
         ]);
     }
 }

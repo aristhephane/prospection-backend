@@ -14,43 +14,55 @@ use Symfony\Component\Routing\Annotation\Route;
 class SearchController extends AbstractController
 {
     /**
-     * Affiche la page de recherche avancée pour les entreprises et fiches.
+     * Recherche avancée pour les entreprises et fiches entreprises.
      */
-    #[Route('/', name: 'search_index')]
+    #[Route('/', name: 'search_index', methods: ['GET'])]
     public function index(
         Request $request, 
         EntrepriseRepository $entrepriseRepo, 
         FicheEntrepriseRepository $ficheRepo,
         PaginatorInterface $paginator
     ): Response {
-        $searchTerm = $request->query->get('q', '');
-        $sector = $request->query->get('sector', '');
-        $size = $request->query->get('size', '');
+        $criteria = [
+            'nom' => $request->query->get('name', ''),
+            'secteurActivite' => $request->query->get('sector', ''),
+            'tailleEntreprise' => $request->query->get('size', ''),
+            'dateCreation' => $request->query->get('date', ''),
+            'commentaires' => $request->query->get('comment', ''),
+        ];
 
-        // Recherche des fiches
-        $queryEntreprises = $entrepriseRepo->createQueryBuilder('e')
-            ->where('e.raisonSociale LIKE :searchTerm OR e.secteurActivite LIKE :searchTerm')
-            ->setParameter('searchTerm', '%'.$searchTerm.'%');
+        // Récupération des résultats via le repository qui gère la logique de recherche
 
-        if (!empty($sector)) {
-            $queryEntreprises->andWhere('e.secteurActivite = :sector')
-                ->setParameter('sector', $sector);
+        try {
+            // Recherche des entreprises
+            $queryEntreprises = $entrepriseRepo->searchEntreprises($criteria);
+
+            // Recherche des fiches entreprises
+            $queryFiches = $ficheRepo->searchFiches($criteria);
+
+            // Pagination pour éviter un affichage trop long
+            $paginationEntreprises = $paginator->paginate(
+                $queryEntreprises, 
+                $request->query->getInt('page_entreprises', 1), 
+                20
+            );
+
+            $paginationFiches = $paginator->paginate(
+                $queryFiches, 
+                $request->query->getInt('page_fiches', 1), 
+                20
+            );
+
+        } catch (\Exception $e) {
+            $this->addFlash('error', 'Erreur lors de la recherche.');
+            $paginationEntreprises = [];
+            $paginationFiches = [];
         }
-
-        if (!empty($size)) {
-            $queryEntreprises->andWhere('e.tailleEntreprise = :size')
-                ->setParameter('size', $size);
-        }
-
-        $pagination = $paginator->paginate(
-            $queryEntreprises->getQuery(),
-            $request->query->getInt('page', 1),
-            20 // Nombre d'éléments par page
-        );
 
         return $this->render('search/index.html.twig', [
-            'pagination' => $pagination,
-            'searchTerm' => $searchTerm,
+            'paginationEntreprises' => $paginationEntreprises,
+            'paginationFiches' => $paginationFiches,
+            'filters' => $criteria,
         ]);
     }
 }

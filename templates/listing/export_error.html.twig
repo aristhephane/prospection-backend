@@ -1,0 +1,11 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Erreur d'Export{% endblock %}
+
+{% block body %}
+    <div class="alert alert-danger">
+        Une erreur est survenue lors de l'exportation des données. Veuillez réessayer plus tard.
+    </div>
+
+    <a href="{{ path('listing_index') }}" class="btn btn-primary">Retour au listing</a>
+{% endblock %}

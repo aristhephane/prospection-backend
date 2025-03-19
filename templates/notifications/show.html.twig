@@ -1,0 +1,14 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Détail de la notification{% endblock %}
+
+{% block body %}
+    <h2>Notification</h2>
+
+    <div class="alert alert-info">
+        <p><strong>Message :</strong> {{ notification.message }}</p>
+        <p><strong>Date :</strong> {{ notification.createdAt|date('d/m/Y H:i') }}</p>
+    </div>
+
+    <a href="{{ path('notifications_index') }}" class="btn btn-secondary">Retour</a>
+{% endblock %}

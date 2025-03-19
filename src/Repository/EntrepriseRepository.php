@@ -6,9 +6,6 @@ use App\Entity\Entreprise;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
-/**
- * @extends ServiceEntityRepository<Entreprise>
- */
 class EntrepriseRepository extends ServiceEntityRepository
 {
     public function __construct(ManagerRegistry $registry)
@@ -17,35 +14,40 @@ class EntrepriseRepository extends ServiceEntityRepository
     }
 
     /**
-     * Recherche des entreprises avec plusieurs critères.
+     * Recherche avancée des entreprises en fonction des critères.
      */
     public function searchEntreprises(array $criteria)
     {
         $qb = $this->createQueryBuilder('e');
 
+        if (!empty($criteria['nom'])) {
+            $qb->andWhere('e.raisonSociale LIKE :nom')
+                ->setParameter('nom', '%'.$criteria['nom'].'%');
+        }
+
         if (!empty($criteria['secteurActivite'])) {
-            $qb->andWhere('e.secteurActivite = :sector')
-               ->setParameter('sector', $criteria['secteurActivite']);
+            $qb->andWhere('e.secteurActivite = :secteur')
+                ->setParameter('secteur', $criteria['secteurActivite']);
         }
 
         if (!empty($criteria['tailleEntreprise'])) {
-            $qb->andWhere('e.tailleEntreprise = :size')
-               ->setParameter('size', $criteria['tailleEntreprise']);
-        }
-
-        if (!empty($criteria['nom'])) {
-            $qb->andWhere('e.raisonSociale LIKE :name')
-               ->setParameter('name', '%' . $criteria['nom'] . '%');
+            $qb->andWhere('e.tailleEntreprise = :taille')
+                ->setParameter('taille', $criteria['tailleEntreprise']);
         }
 
         if (!empty($criteria['dateCreation'])) {
-            $qb->andWhere('e.dateCreation >= :date')
-               ->setParameter('date', new \DateTime($criteria['dateCreation']));
+            try {
+                $date = new \DateTime($criteria['dateCreation']);
+                $qb->andWhere('e.dateCreation >= :date')
+                   ->setParameter('date', $date);
+            } catch (\Exception $e) {
+                // Ne rien faire si la date est invalide
+            }
         }
 
-        return $qb->orderBy('e.dateCreation', 'DESC')
-                  ->getQuery();
+        return $qb->getQuery();
     }
+
 
     //    /**
     //     * @return Entreprise[] Returns an array of Entreprise objects

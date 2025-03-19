@@ -7,6 +7,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: RoleRepository::class)]
 class Role
@@ -16,15 +17,21 @@ class Role
     #[ORM\Column]
     private ?int $id = null;
 
+    // Nom du rôle obligatoire (max 100 caractères)
     #[ORM\Column(length: 100)]
+    #[Assert\NotBlank(message: "Le nom du rôle est obligatoire.")]
+    #[Assert\Length(max: 100, maxMessage: "Le nom du rôle ne doit pas dépasser 100 caractères.")]
     private ?string $nomRole = null;
 
+    // Description optionnelle, max 1000 caractères
     #[ORM\Column(type: Types::TEXT, nullable: true)]
+    #[Assert\Length(max: 1000, maxMessage: "La description ne doit pas dépasser 1000 caractères.")]
     private ?string $description = null;
 
     /**
      * @var Collection<int, Permission>
      */
+    // ManyToMany avec Permission
     #[ORM\ManyToMany(targetEntity: Permission::class, inversedBy: 'roles')]
     #[ORM\JoinTable(name: 'role_permission')]
     private Collection $permissions;
@@ -32,6 +39,7 @@ class Role
     /**
      * @var Collection<int, Utilisateur>
      */
+    // ManyToMany avec Utilisateur
     #[ORM\ManyToMany(targetEntity: Utilisateur::class, mappedBy: 'roles')]
     private Collection $user_role;
 
@@ -40,6 +48,10 @@ class Role
         $this->permissions = new ArrayCollection();
         $this->user_role = new ArrayCollection();
     }
+
+    // ---------------------------------------------
+    // Getters & Setters
+    // ----------------------------------------------
 
     public function getId(): ?int
     {

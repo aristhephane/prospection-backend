@@ -4,6 +4,7 @@ namespace App\Entity;
 
 use App\Repository\NotificationRepository;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: NotificationRepository::class)]
 class Notification
@@ -15,26 +16,36 @@ class Notification
 
     // Message de la notification
     #[ORM\Column(length: 255)]
+    #[Assert\NotBlank(message: "Le message de la notification est obligatoire.")]
+    #[Assert\Length(max: 255, maxMessage: "Le message ne doit pas dépasser 255 caractères.")]
     private ?string $message = null;
 
     // Date de création de la notification
     #[ORM\Column(type: 'datetime')]
+    #[Assert\NotBlank(message: "La date de création de la notification est obligatoire.")]
+    #[Assert\Type("\DateTimeInterface")]
     private ?\DateTimeInterface $dateCreated = null;
 
     // Indique si la notification a été lue
     #[ORM\Column(type: 'boolean', options: ["default" => false])]
+    #[Assert\Type("bool", message: "Le champ doit être un booléen.")]
     private bool $isRead = false;
 
-    // Utilisateur à qui appartient la notification
+    // Relation ManyToOne avec Utilisateur
     #[ORM\ManyToOne(targetEntity: Utilisateur::class, inversedBy: 'notifications')]
+    #[Assert\NotNull(message: "La notification doit être associée à un utilisateur.")]
     #[ORM\JoinColumn(nullable: false)]
-    private ?Utilisateur $utilisateur = null;
+    private ?Utilisateur $user = null;
 
     public function __construct()
     {
-        $this->dateCreated = new \DateTime(); // Date de création par défaut
+        $this->dateCreated = new \DateTime(); // Date de création automatique
     }
 
+    // ---------------------------------------------
+    // Getters & Setters
+    // ---------------------------------------------
+    
     public function getId(): ?int
     {
         return $this->id;
@@ -73,14 +84,14 @@ class Notification
         return $this;
     }
 
-    public function getUtilisateur(): ?Utilisateur
+    public function getUser(): ?Utilisateur
     {
-        return $this->utilisateur;
+        return $this->user;
     }
 
-    public function setUtilisateur(?Utilisateur $utilisateur): self
+    public function setUser(?Utilisateur $user): self
     {
-        $this->utilisateur = $utilisateur;
+        $this->user = $user;
         return $this;
     }
 }

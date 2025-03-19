@@ -7,6 +7,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: FicheEntrepriseRepository::class)]
 class FicheEntreprise
@@ -16,18 +17,37 @@ class FicheEntreprise
     #[ORM\Column]
     private ?int $id = null;
 
+    // Date de visite obligatoire, ne peut pas être dans le futur
+    // ni dans plus d'un an
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
+    #[Assert\NotBlank(message: "La date de visite est obligatoire.")]
+    #Assert\LessThanOrEqual("today", message: "La date de visite ne peut pas être dans le futur.")]
+    #[Assert\LessThanOrEqual("+1 year", message: "La date de visite ne peut pas être dans plus d'un an.")]
+    #[Assert\Type("\DateTimeInterface")] 
     private ?\DateTimeInterface $dateVisite = null;
 
+    // Commentaires optionnels, max 1000 caractères
     #[ORM\Column(type: Types::TEXT, nullable: true)]
+    #[Assert\Length(max: 1000, maxMessage: "Les commentaires ne doivent pas dépasser 1000 caractères.")]
     private ?string $commentaires = null;
 
+    // Date de création obligatoire
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
+    #[Assert\NotBlank(message: "La date de création est obligatoire.")]
+    #[Assert\Type("\DateTimeInterface")]
     private ?\DateTimeInterface $dateCreation = null;
 
+    // Date de modification optionnelle
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
+    #[Assert\Type("\DateTimeInterface")]
     private ?\DateTimeInterface $dateModification = null;
 
+     /**
+     * @ORM\Column(type="boolean")
+     */
+    private $valide;
+
+    // Relation ManyToOne avec Entreprise obligatoire
     #[ORM\ManyToOne(inversedBy: 'ficheEntreprise')]
     #[ORM\JoinColumn(nullable: false)]
     private ?Entreprise $entreprise = null;
@@ -48,6 +68,10 @@ class FicheEntreprise
     {
         $this->historiqueModification = new ArrayCollection();
     }
+
+    // ---------------------------------------------
+    // Getters & Setters
+    // ----------------------------------------------
 
     public function getId(): ?int
     {
@@ -134,6 +158,18 @@ class FicheEntreprise
     public function setModifiePar(?Utilisateur $modifiePar): static
     {
         $this->modifiePar = $modifiePar;
+
+        return $this;
+    }
+
+    public function isValide(): bool
+    {
+        return $this->valide;
+    }
+
+    public function setValide(bool $valide): self
+    {
+        $this->valide = $valide;
 
         return $this;
     }

@@ -10,59 +10,73 @@ use Symfony\Component\Routing\Annotation\Route;
 use App\Service\ExportService;
 use Knp\Component\Pager\PaginatorInterface;
 
-#[Route('/listings')]
+#[Route('/listing')]
 class ListingController extends AbstractController
 {
     /**
-     * Génère un listing global en PDF/Excel.
+     * Affiche un listing paginé avec filtres appliqués.
      */
-    #[Route('/export/{format}', name: 'listing_export', requirements: ['format' => 'pdf|excel'])]
-    public function export(ExportService $exportService, string $format, EntrepriseRepository $entrepriseRepo, Request $request): Response
-    {
-        // Récupération des filtres
-        $criteria = [
-            'secteurActivite' => $request->query->get('sector'),
-            'tailleEntreprise' => $request->query->get('size'),
-            'nom' => $request->query->get('name'),
-            'dateCreation' => $request->query->get('date'),
-        ];
-
-        $query = $entrepriseRepo->searchEntreprises($criteria);
-        $entreprises = $query->getResult();
-
-        return $exportService->generateExport($entreprises, $format);
-    }
-
-    /**
-     * Génère un listing filtré par plusieurs critères.
-     */
-    #[Route('/filtre', name: 'listing_filtered')]
-    public function listingFiltered(
+    #[Route('/', name: 'listing_index', methods: ['GET'])]
+    public function index(
         Request $request,
         EntrepriseRepository $entrepriseRepo,
         PaginatorInterface $paginator
     ): Response {
-        // Récupération des filtres
-        $criteria = [
+        $filters = [
+            'nom' => $request->query->get('name'),
             'secteurActivite' => $request->query->get('sector'),
             'tailleEntreprise' => $request->query->get('size'),
-            'nom' => $request->query->get('name'),
             'dateCreation' => $request->query->get('date'),
         ];
 
-        // Recherche des entreprises filtrées
-        $query = $entrepriseRepo->searchEntreprises($criteria);
-
-        // Pagination des résultats
-        $pagination = $paginator->paginate(
-            $query,
-            $request->query->getInt('page', 1),
-            20 // Nombre d'éléments par page
-        );
+        try {
+            // Recherche des entreprises filtrées
+            $query = $entrepriseRepo->searchEntreprises($filters);
+            
+            // Pagination des résultats
+            $pagination = $paginator->paginate(
+                $query,
+                $request->query->getInt('page', 1),
+                20 // Nombre d'éléments par page
+            );
+        } catch (\Exception $e) {
+            $this->addFlash('error', 'Erreur lors du chargement de la liste.');
+            $pagination = [];
+        }
 
         return $this->render('listing/list.html.twig', [
             'pagination' => $pagination,
-            'filters' => $criteria,
+            'filters' => $filters,
         ]);
+    }
+
+    /**
+     * Génère un listing filtré et exporté en PDF ou Excel.
+     */
+    #[Route('/export/{format}', name: 'listing_export', requirements: ['format' => 'pdf|excel'])]
+    public function export(
+        ExportService $exportService,
+        string $format,
+        EntrepriseRepository $entrepriseRepo,
+        Request $request
+    ): Response {
+        // Récupération des filtres pour l'exportation
+        $criteria = [
+            'nom' => $request->query->get('name'),
+            'secteurActivite' => $request->query->get('sector'),
+            'tailleEntreprise' => $request->query->get('size'),
+            'dateCreation' => $request->query->get('date'),
+        ];
+
+        try {
+            // Recherche des entreprises filtrées
+            $query = $entrepriseRepo->searchEntreprises($criteria);
+            $entreprises = $query->getResult();
+
+            return $exportService->generateExport($entreprises, $format);
+        } catch (\Exception $e) {
+            $this->addFlash('error', 'Erreur lors de l’export des données.');
+            return $this->redirectToRoute('listing_index');
+        }
     }
 }

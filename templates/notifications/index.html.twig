@@ -1,17 +1,37 @@
 {% extends 'base.html.twig' %}
 
+{% block title %}Notifications{% endblock %}
+
 {% block body %}
-    <h2>Mes notifications</h2>
+    <h2>Mes Notifications</h2>
+
+    {% for message in app.flashes('success') %}
+        <div class="alert alert-success">{{ message }}</div>
+    {% endfor %}
+
+    {% for message in app.flashes('error') %}
+        <div class="alert alert-danger">{{ message }}</div>
+    {% endfor %}
 
     {% if notifications is empty %}
-        <p>Aucune nouvelle notification.</p>
+        <p>Aucune notification.</p>
     {% else %}
-        <ul>
+        <ul class="list-group">
             {% for notification in notifications %}
-                <li>
-                    {{ notification.message }} - {{ notification.dateCreated|date('d/m/Y H:i') }}
-                    <a href="{{ path('notification_mark_read', {id: notification.id}) }}">✅ Marquer comme lue</a>
-                    <a href="{{ path('notification_delete', {id: notification.id}) }}">❌ Supprimer</a>
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <span>{{ notification.message }}</span>
+                    
+                    <div>
+                        {% if not notification.read %}
+                            <form method="POST" action="{{ path('notification_mark_read', {'id': notification.id}) }}">
+                                <button type="submit" class="btn btn-primary btn-sm">✅ Marquer comme lue</button>
+                            </form>
+                        {% endif %}
+
+                        <form method="POST" action="{{ path('notification_delete', {'id': notification.id}) }}" class="d-inline">
+                            <button type="submit" class="btn btn-danger btn-sm">❌ Supprimer</button>
+                        </form>
+                    </div>
                 </li>
             {% endfor %}
         </ul>

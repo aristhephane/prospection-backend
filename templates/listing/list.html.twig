@@ -1,25 +1,70 @@
 {% extends 'base.html.twig' %}
 
+{% block title %} Listing des Entreprises {% endblock %}
+
 {% block body %}
-    <h2>Filtrer les entreprises</h2>
-    <form method="get">
-        <input type="text" name="name" placeholder="Nom de l'entreprise" value="{{ filters.nom }}">
-        <input type="text" name="sector" placeholder="Secteur d'activité" value="{{ filters.secteurActivite }}">
-        <input type="text" name="size" placeholder="Taille de l'entreprise" value="{{ filters.tailleEntreprise }}">
-        <input type="date" name="date" value="{{ filters.dateCreation }}">
-        <button type="submit">Rechercher</button>
+    <h1 class="mb-4">Liste des Entreprises</h1>
+
+    <!-- Formulaire de filtrage -->
+    <form method="get" class="mb-4">
+        <div class="row">
+            <div class="col-md-3">
+                <input type="text" name="name" class="form-control" placeholder="Nom" value="{{ filters.nom ?? '' }}">
+            </div>
+            <div class="col-md-3">
+                <input type="text" name="sector" class="form-control" placeholder="Secteur d'activité" value="{{ filters.secteurActivite ?? '' }}">
+            </div>
+            <div class="col-md-2">
+                <input type="number" name="size" class="form-control" placeholder="Taille" value="{{ filters.tailleEntreprise ?? '' }}">
+            </div>
+            <div class="col-md-2">
+                <input type="date" name="date" class="form-control" value="{{ filters.dateCreation ?? '' }}">
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary">Filtrer</button>
+                <a href="{{ path('listing_index') }}" class="btn btn-secondary">Réinitialiser</a>
+            </div>
+        </div>
     </form>
 
-    <h2>Résultats</h2>
-    {% if pagination|length == 0 %}
-        <p>Aucune entreprise trouvée.</p>
-    {% else %}
-        <ul>
+    <!-- Tableau des entreprises -->
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Nom</th>
+                <th>Secteur</th>
+                <th>Taille</th>
+                <th>Date de Création</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
             {% for entreprise in pagination %}
-                <li>{{ entreprise.raisonSociale }} - {{ entreprise.secteurActivite }} - {{ entreprise.dateCreation|date('d/m/Y') }}</li>
+                <tr>
+                    <td>{{ entreprise.raisonSociale }}</td>
+                    <td>{{ entreprise.secteurActivite }}</td>
+                    <td>{{ entreprise.tailleEntreprise }}</td>
+                    <td>{{ entreprise.dateCreation|date('d/m/Y') }}</td>
+                    <td>
+                        <a href="{{ path('entreprise_show', { id: entreprise.id }) }}" class="btn btn-info btn-sm">Détails</a>
+                    </td>
+                </tr>
+            {% else %}
+                <tr>
+                    <td colspan="5" class="text-center">Aucune entreprise trouvée.</td>
+                </tr>
             {% endfor %}
-        </ul>
+        </tbody>
+    </table>
 
+    <!-- Pagination -->
+    <div class="pagination">
         {{ knp_pagination_render(pagination) }}
-    {% endif %}
+    </div>
+
+    <!-- Boutons d'export -->
+    <div class="mt-4">
+        <a href="{{ path('listing_export', { format: 'pdf' }) }}" class="btn btn-danger">Exporter en PDF</a>
+        <a href="{{ path('listing_export', { format: 'excel' }) }}" class="btn btn-success">Exporter en Excel</a>
+    </div>
 {% endblock %}

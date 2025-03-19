@@ -1,4 +1,5 @@
 <?php
+// src/Controller/UtilisateurController.php
 
 namespace App\Controller;
 
@@ -10,6 +11,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 #[Route('/utilisateurs')]
 class UtilisateurController extends AbstractController
@@ -18,15 +20,20 @@ class UtilisateurController extends AbstractController
      * Affiche la liste complète des utilisateurs.
      * Seul un administrateur ou le service informatique peut accéder à cette page.
      */
-    #[Route('/', name: 'utilisateur_index')]
+    #[Route('/', name: 'utilisateur_index', methods: ['GET'])]
     public function index(UtilisateurRepository $utilisateurRepository): Response
     {
         // Vérifie que l'utilisateur connecté possède le rôle ADMIN.
         $this->denyAccessUnlessGranted('ROLE_ADMIN');
 
-        // Récupère tous les utilisateurs de la base de données.
-        $utilisateurs = $utilisateurRepository->findAll();
-
+         // Récupère tous les utilisateurs de la base de données.
+        try {
+            $utilisateurs = $utilisateurRepository->findAll();
+        } catch (\Exception $e) {
+            $this->addFlash('error', 'Erreur lors du chargement des utilisateurs.');
+            $utilisateurs = [];
+        }
+        
         // Rendu du template Twig 'utilisateur/index.html.twig' avec la liste des utilisateurs.
         return $this->render('utilisateur/index.html.twig', [
             'utilisateurs' => $utilisateurs,
@@ -62,11 +69,11 @@ class UtilisateurController extends AbstractController
     }
 
     /**
-     * Permet aux administrateurs d'ajouter un nouvel utilisateur.
-     * Les comptes sont créés par un administrateur.
-     */
-    #[Route('/ajouter', name: 'utilisateur_new')]
-    public function new(Request $request, EntityManagerInterface $entityManager): Response
+    * Permet aux administrateurs d'ajouter un nouvel utilisateur.
+    * Les comptes sont créés par un administrateur.
+    */
+    #[Route('/ajouter', name: 'utilisateur_new', methods: ['GET', 'POST'])]
+    public function new(Request $request, EntityManagerInterface $entityManager, UserPasswordHasherInterface $passwordHasher): Response
     {
         // Restriction d'accès : seuls les administrateurs peuvent ajouter des utilisateurs.
         $this->denyAccessUnlessGranted('ROLE_ADMIN');
@@ -79,13 +86,51 @@ class UtilisateurController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            // Vous pouvez ici intégrer la logique de hachage du mot de passe avec UserPasswordHasherInterface.
-            $entityManager->persist($utilisateur);
-            $entityManager->flush();
-            $this->addFlash('success', 'Nouvel utilisateur créé.');
-            return $this->redirectToRoute('utilisateur_index');
+            try {
+                // Récupère le mot de passe en clair du formulaire
+                $plainPassword = $form->get('password')->getData();
+
+                if ($plainPassword) {
+                    // Hachage du mot de passe
+                    $hashedPassword = $passwordHasher->hashPassword($utilisateur, $plainPassword);
+                    $utilisateur->setPassword($hashedPassword);
+                }
+
+                $entityManager->persist($utilisateur);
+                $entityManager->flush();
+
+                $this->addFlash('success', 'Utilisateur créé avec succès.');
+                return $this->redirectToRoute('utilisateur_index');
+            } catch (\Exception $e) {
+                $this->addFlash('error', 'Erreur lors de la création de l’utilisateur.');
+            }
         }
+
         return $this->render('utilisateur/new.html.twig', [
+            'form' => $form->createView(),
+        ]);
+    }
+
+    /**
+     * Permet aux administrateurs de modifier un utilisateur.
+     */
+    #[Route('/{id}/modifier', name: 'utilisateur_edit', methods: ['GET', 'POST'])]
+    public function edit(Request $request, Utilisateur $utilisateur, EntityManagerInterface $entityManager): Response
+    {
+        $form = $this->createForm(UtilisateurType::class, $utilisateur);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            try {
+                $entityManager->flush();
+                $this->addFlash('success', 'Utilisateur modifié avec succès.');
+                return $this->redirectToRoute('utilisateur_index');
+            } catch (\Exception $e) {
+                $this->addFlash('error', 'Erreur lors de la modification de l’utilisateur.');
+            }
+        }
+
+        return $this->render('utilisateur/edit.html.twig', [
             'form' => $form->createView(),
         ]);
     }
@@ -103,36 +148,27 @@ class UtilisateurController extends AbstractController
     }
 
     /**
-     * Permet aux administrateurs de modifier un utilisateur.
-     */
-    #[Route('/{id}/modifier', name: 'utilisateur_edit')]
-    public function edit(Request $request, Utilisateur $utilisateur, EntityManagerInterface $entityManager): Response
-    {
-        $this->denyAccessUnlessGranted('ROLE_ADMIN');
-        $form = $this->createForm(UtilisateurType::class, $utilisateur);
-        $form->handleRequest($request);
-
-        if ($form->isSubmitted() && $form->isValid()) {
-            // Sauvegarde les modifications.
-            $entityManager->flush();
-            $this->addFlash('success', 'Utilisateur modifié.');
-            return $this->redirectToRoute('utilisateur_index');
-        }
-        return $this->render('utilisateur/edit.html.twig', [
-            'form' => $form->createView(),
-        ]);
-    }
-
-    /**
      * Permet aux administrateurs de supprimer définitivement un utilisateur.
      */
-    #[Route('/{id}/supprimer', name: 'utilisateur_delete')]
-    public function delete(Utilisateur $utilisateur, EntityManagerInterface $entityManager): Response
+
+    #[Route('/{id}/supprimer', name: 'utilisateur_delete', methods: ['POST'])]
+    public function delete(Request $request, Utilisateur $utilisateur, EntityManagerInterface $entityManager): Response
     {
+        // Vérification de l'accès (action réservée aux administrateurs par exemple)
         $this->denyAccessUnlessGranted('ROLE_ADMIN');
-        $entityManager->remove($utilisateur);
-        $entityManager->flush();
-        $this->addFlash('success', 'Utilisateur supprimé.');
+
+        // Vérification du token CSRF
+        if ($this->isCsrfTokenValid('delete' . $utilisateur->getId(), $request->request->get('_token'))) {
+            try {
+                $entityManager->remove($utilisateur);
+                $entityManager->flush();
+                $this->addFlash('success', 'Utilisateur supprimé avec succès.');
+            } catch (\Exception $e) {
+                $this->addFlash('error', 'Erreur lors de la suppression de l’utilisateur.');
+            }
+        } else {
+            $this->addFlash('error', 'Token CSRF invalide.');
+        }
         return $this->redirectToRoute('utilisateur_index');
     }
 

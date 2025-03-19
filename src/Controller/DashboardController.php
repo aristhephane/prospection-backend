@@ -1,4 +1,5 @@
 <?php
+// src/Controller/DashboardController.php
 
 namespace App\Controller;
 
@@ -14,33 +15,39 @@ class DashboardController extends AbstractController
     /**
      * Affiche la page d'accueil du tableau de bord avec une synthèse générale.
      */
-    #[Route('/', name: 'dashboard_index')]
+    #[Route('/', name: 'dashboard_index', methods: ['GET'])]
     public function index(EntrepriseRepository $entrepriseRepo, FicheEntrepriseRepository $ficheRepo): Response
     {
-        // Optimisation : Utilisation de COUNT() en base de données
-        $nombreEntreprises = $entrepriseRepo->createQueryBuilder('e')
-            ->select('COUNT(e.id)')
-            ->getQuery()
-            ->getSingleScalarResult();
+        try {
+            // Optimisation : Utilisation de COUNT() en base de données
+            $nombreEntreprises = $entrepriseRepo->createQueryBuilder('e')
+                ->select('COUNT(e.id)')
+                ->getQuery()
+                ->getSingleScalarResult();
 
-        $nombreFiches = $ficheRepo->createQueryBuilder('f')
-            ->select('COUNT(f.id)')
-            ->getQuery()
-            ->getSingleScalarResult();
+            $nombreFiches = $ficheRepo->createQueryBuilder('f')
+                ->select('COUNT(f.id)')
+                ->getQuery()
+                ->getSingleScalarResult();
+            
+            // Récupération des dernières entreprises ajoutées
+            $dernieresEntreprises = $entrepriseRepo->createQueryBuilder('e')
+                ->orderBy('e.id', 'DESC')
+                ->setMaxResults(5)
+                ->getQuery()
+                ->getResult();
 
-        // Récupération des dernières entreprises ajoutées
-        $dernieresEntreprises = $entrepriseRepo->createQueryBuilder('e')
-            ->orderBy('e.id', 'DESC')
-            ->setMaxResults(5)
-            ->getQuery()
-            ->getResult();
+            // Tableau de statistiques
+            $stats = [
+                'nombreEntreprises' => $nombreEntreprises,
+                'nombreFiches' => $nombreFiches,
+                'dernieresEntreprises' => $dernieresEntreprises,
+            ];
 
-        // Tableau de statistiques
-        $stats = [
-            'nombreEntreprises' => $nombreEntreprises,
-            'nombreFiches' => $nombreFiches,
-            'dernieresEntreprises' => $dernieresEntreprises,
-        ];
+        } catch (\Exception $e) {
+            $this->addFlash('error', 'Erreur lors du chargement des statistiques.');
+            $stats = [];
+        }
 
         return $this->render('dashboard/index.html.twig', [
             'stats' => $stats,
@@ -50,29 +57,34 @@ class DashboardController extends AbstractController
     /**
      * Affiche des statistiques détaillées.
      */
-    #[Route('/statistiques', name: 'dashboard_statistiques')]
+    #[Route('/statistiques', name: 'dashboard_statistiques', methods: ['GET'])]
     public function statistiques(EntrepriseRepository $entrepriseRepo, FicheEntrepriseRepository $ficheRepo): Response
     {
-        $entreprises = $entrepriseRepo->findAll();
-        $secteurs = [];
-
-        foreach ($entreprises as $entreprise) {
-            $secteur = $entreprise->getSecteurActivite();
-            if (!isset($secteurs[$secteur])) {
-                $secteurs[$secteur] = 0;
+        try {
+            $entreprises = $entrepriseRepo->findAll();
+            $secteurs = [];
+            foreach ($entreprises as $entreprise) {
+                $secteur = $entreprise->getSecteurActivite();
+                if (!isset($secteurs[$secteur])) {
+                    $secteurs[$secteur] = 0;
+                }
+                $secteurs[$secteur]++;
             }
-            $secteurs[$secteur]++;
-        }
 
-        // Nombre de fiches entreprises créées par mois sur les 12 derniers mois
-        $fichesParMois = $ficheRepo->createQueryBuilder('f')
-            ->select('MONTH(f.dateCreation) as mois, COUNT(f.id) as total')
-            ->where('f.dateCreation >= :dateDebut')
-            ->setParameter('dateDebut', new \DateTime('-12 months'))
-            ->groupBy('mois')
-            ->orderBy('mois', 'ASC')
-            ->getQuery()
-            ->getResult();
+            // Récupération du nombre de fiches créées par mois sur les 12 derniers mois
+            $fichesParMois = $ficheRepo->createQueryBuilder('f')
+                ->select('MONTH(f.dateCreation) as mois, COUNT(f.id) as total')
+                ->where('f.dateCreation >= :dateDebut')
+                ->setParameter('dateDebut', new \DateTime('-12 months'))
+                ->groupBy('mois')
+                ->orderBy('mois', 'ASC')
+                ->getQuery()
+                ->getResult();
+        } catch (\Exception $e) {
+            $this->addFlash('error', 'Erreur lors du chargement des statistiques détaillées.');
+            $secteurs = [];
+            $fichesParMois = [];
+        }
 
         return $this->render('dashboard/statistiques.html.twig', [
             'secteurs' => $secteurs,
@@ -81,24 +93,27 @@ class DashboardController extends AbstractController
     }
 
     /**
-     * Affiche le suivi des activités de prospection (ex. nombre de visites récentes).
+     * Affiche les fiches de prospection récentes.
      */
-    #[Route('/prospection', name: 'dashboard_prospection')]
+    #[Route('/prospection', name: 'dashboard_prospection', methods: ['GET'])]
     public function prospection(FicheEntrepriseRepository $ficheRepo): Response
     {
-        $dateLimite = new \DateTime('-7 days');
-
-        $fichesRecents = $ficheRepo->createQueryBuilder('f')
-            ->where('f.dateCreation >= :dateLimite')
-            ->setParameter('dateLimite', $dateLimite)
-            ->orderBy('f.dateCreation', 'DESC')
-            ->setMaxResults(10)
-            ->getQuery()
-            ->getResult();
+        try {
+            $dateLimite = new \DateTime('-7 days');
+            $fichesRecents = $ficheRepo->createQueryBuilder('f')
+                ->where('f.dateCreation >= :dateLimite')
+                ->setParameter('dateLimite', $dateLimite)
+                ->orderBy('f.dateCreation', 'DESC')
+                ->setMaxResults(10)
+                ->getQuery()
+                ->getResult();
+        } catch (\Exception $e) {
+            $this->addFlash('error', 'Erreur lors du chargement des données de prospection.');
+            $fichesRecents = [];
+        }
 
         return $this->render('dashboard/prospection.html.twig', [
             'fichesRecents' => $fichesRecents,
         ]);
     }
 }
-// Compare this snippet from prospection-backend/src/Controller/HistoriqueModificationController.php:

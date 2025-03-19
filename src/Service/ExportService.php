@@ -39,27 +39,27 @@ class ExportService
         ]);
     }
 
-    private function generateExcel(array $entreprises): Response
-    {
-        $spreadsheet = new Spreadsheet();
-        $sheet = $spreadsheet->getActiveSheet();
-        $sheet->setCellValue('A1', 'Nom de l\'entreprise');
-        $sheet->setCellValue('B1', 'Secteur d\'activité');
+   private function generateExcel(array $entreprises): Response
+{
+    $spreadsheet = new Spreadsheet();
+    $sheet = $spreadsheet->getActiveSheet();
+    $sheet->setCellValue('A1', 'Nom de l\'entreprise');
+    $sheet->setCellValue('B1', 'Secteur d\'activité');
 
-        $row = 2;
-        foreach ($entreprises as $entreprise) {
-            $sheet->setCellValue('A' . $row, $entreprise->getRaisonSociale());
-            $sheet->setCellValue('B' . $row, $entreprise->getSecteurActivite());
-            $row++;
-        }
-
-        $writer = new Xlsx($spreadsheet);
-        $filePath = 'entreprises.xlsx';
-        $writer->save($filePath);
-
-        return new Response(file_get_contents($filePath), 200, [
-            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            'Content-Disposition' => 'attachment; filename="entreprises.xlsx"',
-        ]);
+    $row = 2; // Variable initialisée correctement
+    foreach ($entreprises as $entreprise) {
+        $sheet->setCellValue('A' . $row, $entreprise->getRaisonSociale());
+        $sheet->setCellValue('B' . $row, $entreprise->getSecteurActivite());
+        $row++;
     }
+
+    $writer = new Xlsx($spreadsheet);
+    $filePath = sys_get_temp_dir() . '/entreprises.xlsx';
+    $writer->save($filePath);
+
+    return new Response(file_get_contents($filePath), 200, [
+        'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'Content-Disposition' => 'attachment; filename="entreprises.xlsx"',
+    ]);
+}
 }

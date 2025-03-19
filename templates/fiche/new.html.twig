@@ -1,0 +1,14 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Créer une fiche entreprise{% endblock %}
+
+{% block body %}
+    <h1>Créer une nouvelle fiche entreprise</h1>
+    {{ form_start(form) }}
+        {{ form_row(form.dateVisite) }}
+        {{ form_row(form.commentaires) }}
+        {{ form_row(form.entreprise) }}
+        <button type="submit" class="btn btn-success">Enregistrer</button>
+    {{ form_end(form) }}
+    <a href="{{ path('fiche_index') }}" class="btn btn-secondary">Retour à la liste</a>
+{% endblock %}

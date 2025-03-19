@@ -1,0 +1,13 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Détails de la fiche entreprise{% endblock %}
+
+{% block body %}
+    <h1>Détails de la fiche entreprise</h1>
+    <p><strong>ID:</strong> {{ fiche.id }}</p>
+    <p><strong>Date de visite:</strong> {{ fiche.dateVisite|date('d/m/Y H:i') }}</p>
+    <p><strong>Entreprise:</strong> {{ fiche.entreprise.raisonSociale }}</p>
+    <p><strong>Commentaires:</strong> {{ fiche.commentaires }}</p>
+    <a href="{{ path('fiche_index') }}" class="btn btn-secondary">Retour à la liste</a>
+    <a href="{{ path('fiche_edit', {'id': fiche.id}) }}" class="btn btn-warning">Modifier</a>
+{% endblock %}

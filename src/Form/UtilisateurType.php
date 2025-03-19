@@ -57,7 +57,7 @@ class UtilisateurType extends AbstractType
                 ],
             ])
             // Champ pour le mot de passe avec confirmation
-            ->add('motDePasse', RepeatedType::class, [
+            ->add('password', RepeatedType::class, [
                 'type' => PasswordType::class,
                 'first_options'  => [
                     'label' => 'Mot de passe',

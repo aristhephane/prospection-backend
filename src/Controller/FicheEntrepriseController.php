@@ -1,12 +1,13 @@
 <?php
+// src/Controller/FicheEntrepriseController.php
 
 namespace App\Controller;
 
 use App\Entity\FicheEntreprise;
 use App\Entity\HistoriqueModification;
 use App\Form\FicheEntrepriseType;
+use App\Service\PdfGenerator; // Service pour générer des PDF
 use App\Repository\FicheEntrepriseRepository;
-use App\Service\PdfGenerator;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -16,13 +17,18 @@ use Symfony\Component\Routing\Annotation\Route;
 #[Route('/fiches')]
 class FicheEntrepriseController extends AbstractController
 {
-    /**
+     /**
      * Affiche la liste de toutes les fiches entreprises.
      */
-    #[Route('/', name: 'fiche_index')]
+    #[Route('/', name: 'fiche_index', methods: ['GET'])]
     public function index(FicheEntrepriseRepository $repository): Response
     {
-        $fiches = $repository->findAll();
+        try {
+            $fiches = $repository->findAll();
+        } catch (\Exception $e) {
+            $this->addFlash('error', 'Erreur lors du chargement des fiches.');
+            $fiches = [];
+        }
         return $this->render('fiche/index.html.twig', [
             'fiches' => $fiches,
         ]);
@@ -31,7 +37,7 @@ class FicheEntrepriseController extends AbstractController
     /**
      * Affiche les détails d'une fiche entreprise.
      */
-    #[Route('/{id}', name: 'fiche_show')]
+    #[Route('/{id}', name: 'fiche_show', methods: ['GET'])]
     public function show(FicheEntreprise $fiche): Response
     {
         return $this->render('fiche/show.html.twig', [
@@ -42,7 +48,7 @@ class FicheEntrepriseController extends AbstractController
     /**
      * Crée une nouvelle fiche entreprise.
      */
-    #[Route('/nouvelle', name: 'fiche_new')]
+    #[Route('/nouvelle', name: 'fiche_new', methods: ['GET', 'POST'])]
     public function new(Request $request, EntityManagerInterface $entityManager): Response
     {
         $fiche = new FicheEntreprise();
@@ -50,16 +56,19 @@ class FicheEntrepriseController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            // Définit la date de création et associe le créateur (utilisateur connecté)
-            $fiche->setDateCreation(new \DateTime());
-            $fiche->setCreePar($this->getUser());
-
-            $entityManager->persist($fiche);
-            $entityManager->flush();
-
-            $this->addFlash('success', 'Fiche entreprise créée.');
-            return $this->redirectToRoute('fiche_index');
+            try {
+                // Définit la date de création et associe le créateur (utilisateur connecté)
+                $fiche->setDateCreation(new \DateTime());
+                $fiche->setCreePar($this->getUser());
+                $entityManager->persist($fiche);
+                $entityManager->flush();
+                $this->addFlash('success', 'Fiche entreprise créée.');
+                return $this->redirectToRoute('fiche_index');
+            } catch (\Exception $e) {
+                $this->addFlash('error', 'Erreur lors de la création de la fiche entreprise.');
+            }
         }
+
         return $this->render('fiche/new.html.twig', [
             'form' => $form->createView(),
         ]);
@@ -68,44 +77,57 @@ class FicheEntrepriseController extends AbstractController
     /**
      * Modifie une fiche entreprise et enregistre l'historique de la modification.
      */
-    #[Route('/{id}/modifier', name: 'fiche_edit')]
+    #[Route('/{id}/modifier', name: 'fiche_edit', methods: ['GET', 'POST'])]
     public function edit(Request $request, FicheEntreprise $fiche, EntityManagerInterface $entityManager): Response
     {
         $form = $this->createForm(FicheEntrepriseType::class, $fiche);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            // Met à jour la date de modification
-            $fiche->setDateModification(new \DateTime());
+            try {
+                // Met à jour la date de modification
+                $fiche->setDateModification(new \DateTime());
 
-            // Crée un enregistrement dans l'historique des modifications
-            $historique = new HistoriqueModification();
-            $historique->setDateModification(new \DateTime());
-            $historique->setDetailsModification('Modification effectuée par ' . $this->getUser()->getUserIdentifier());
-            $historique->setFicheEntreprise($fiche);
-            $historique->setUtilisateur($this->getUser());
-            $entityManager->persist($historique);
+                // Crée un enregistrement dans l'historique des modifications
+                $historique = new HistoriqueModification();
+                $historique->setDateModification(new \DateTime());
+                $historique->setDetailsModification('Modification effectuée par ' . $this->getUser()->getUserIdentifier());
+                $historique->setFicheEntreprise($fiche);
+                $historique->setUtilisateur($this->getUser());
+                $entityManager->persist($historique);
 
-            $entityManager->flush();
-            $this->addFlash('success', 'Fiche modifiée et historique enregistré.');
-            return $this->redirectToRoute('fiche_index');
+                $entityManager->flush();
+                $this->addFlash('success', 'Fiche modifiée et historique enregistré.');
+                return $this->redirectToRoute('fiche_index');
+            } catch (\Exception $e) {
+                $this->addFlash('error', 'Erreur lors de la modification de la fiche.');
+            }
         }
+
         return $this->render('fiche/edit.html.twig', [
             'form' => $form->createView(),
         ]);
     }
 
-    /**
+     /**
      * Valide les modifications d'une fiche entreprise.
      * On suppose que l'entité FicheEntreprise possède un champ "valide" (booléen).
      */
-    #[Route('/{id}/valider', name: 'fiche_valider')]
-    public function valider(FicheEntreprise $fiche, EntityManagerInterface $entityManager): Response
+    #[Route('/{id}/valider', name: 'fiche_valider', methods: ['POST'])]
+    public function valider(Request $request, FicheEntreprise $fiche, EntityManagerInterface $entityManager): Response
     {
-        // Marque la fiche comme validée
-        $fiche->setValide(true);
-        $entityManager->flush();
-        $this->addFlash('success', 'La fiche a été validée.');
+        // Vérification du token CSRF
+        if ($this->isCsrfTokenValid('valider' . $fiche->getId(), $request->request->get('_token'))) {
+            try {
+                $fiche->setValide(true);
+                $entityManager->flush();
+                $this->addFlash('success', 'La fiche a été validée.');
+            } catch (\Exception $e) {
+                $this->addFlash('error', 'Erreur lors de la validation de la fiche.');
+            }
+        } else {
+            $this->addFlash('error', 'Token CSRF invalide.');
+        }
         return $this->redirectToRoute('fiche_index');
     }
 
@@ -149,7 +171,7 @@ class FicheEntrepriseController extends AbstractController
         // Récupère le commentaire envoyé via POST (champ "commentaire").
         $commentaire = $request->request->get('commentaire');
         if ($commentaire) {
-            $fiche->setCommentaireInterne($commentaire);
+            $fiche->setCommentaires($commentaire);
             $entityManager->flush();
             $this->addFlash('success', 'Commentaire ajouté.');
         }

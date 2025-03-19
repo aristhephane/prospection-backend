@@ -66,10 +66,10 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(type: 'datetime', nullable: true)]
     private ?\DateTimeInterface $tokenExpiration = null;
 
-    // Relation ManyToMany avec Role (bidirectionnelle)
+
     #[ORM\ManyToMany(targetEntity: Role::class, inversedBy: 'utilisateurs')]
     #[ORM\JoinTable(name: 'user_role')]
-    private Collection $roles;
+    private Collection $roleEntities;
 
     // Relation OneToMany avec FicheEntreprise (côté propriétaire)
     #[ORM\OneToMany(targetEntity: FicheEntreprise::class, mappedBy: 'creePar')]
@@ -79,12 +79,21 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\OneToMany(targetEntity: HistoriqueModification::class, mappedBy: 'utilisateur')]
     private Collection $historiqueModification;
 
+    // Relation OneToMany avec Session
+    #[ORM\OneToMany(targetEntity: Session::class, mappedBy: 'utilisateur')]
+    private Collection $sessions;
+
+    // Relation OneToMany avec Notification
+    #[ORM\OneToMany(targetEntity: Notification::class, mappedBy: 'user')]
+    private Collection $notifications;
+
     public function __construct()
     {
-        $this->roles = new ArrayCollection();
+        $this->roleEntities = new ArrayCollection();
         $this->ficheEntreprise = new ArrayCollection();
         $this->historiqueModification = new ArrayCollection();
         $this->dateCreation = new \DateTime();
+        $this->sessions = new ArrayCollection();
     }
 
     // ---------------------------------------------
@@ -100,7 +109,7 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
     // Retourne la liste des rôles (noms) de l'utilisateur
     public function getRoles(): array
     {
-        $roleNames = array_map(fn($role) => $role->getNomRole(), $this->roles->toArray());
+        $roleNames = array_map(fn($role) => $role->getNomRole(), $this->roleEntities->toArray());
         // Ajoute le rôle par défaut ROLE_USER
         $roleNames[] = 'ROLE_USER';
         return array_unique($roleNames);
@@ -247,25 +256,29 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
     // Gestion de la relation ManyToMany avec Role
     // ---------------------------------------------
 
-    // Retourne la collection des rôles associés à l'utilisateur
-    public function getRolesAsEntities(): Collection
+    // Retourne la collection d'entités Role associées.
+    public function getRoleEntities(): Collection
     {
-        return $this->roles;
+        return $this->roleEntities;
     }
 
-    // Ajoute un rôle à l'utilisateur
-    public function addRole(Role $role): self
+    // Ajoute un rôle à l'utilisateur.
+    public function addRoleEntity(Role $role): self
     {
-        if (!$this->roles->contains($role)) {
-            $this->roles->add($role);
+        if (!$this->roleEntities->contains($role)) {
+            $this->roleEntities->add($role);
+            // Assurer la réciprocité
+            $role->addUtilisateur($this);
         }
         return $this;
     }
 
-    // Supprime un rôle de l'utilisateur
-    public function removeRole(Role $role): self
+    // Supprime un rôle de l'utilisateur.
+    public function removeRoleEntity(Role $role): self
     {
-        $this->roles->removeElement($role);
+        if ($this->roleEntities->removeElement($role)) {
+            $role->removeUtilisateur($this);
+        }
         return $this;
     }
 

@@ -15,7 +15,7 @@ class Permission
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    private ?int $id = null;    
+    private ?int $id = null;
 
     // Nom de la permission obligatoire (max 100 caractères)
     #[ORM\Column(length: 100)]
@@ -32,8 +32,8 @@ class Permission
      * @var Collection<int, Role>
      */
     // ManyToMany avec Role
-    #[ORM\ManyToMany(targetEntity: Role::class, mappedBy: 'permissions', inversedBy: 'permissions')]
-    #[ORM\JoinTable(name: 'role_permission')]
+    #[ORM\ManyToMany(targetEntity: Role::class, inversedBy: 'permissions')]
+    //  #[ORM\JoinTable(name: 'role_permission')]
     private Collection $roles;
 
     public function __construct()
@@ -41,7 +41,7 @@ class Permission
         $this->roles = new ArrayCollection();
     }
 
-     // ---------------------------------------------
+    // ---------------------------------------------
     // Getters & Setters
     // ----------------------------------------------
     public function getId(): ?int

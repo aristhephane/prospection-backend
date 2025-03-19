@@ -31,22 +31,21 @@ class Role
     /**
      * @var Collection<int, Permission>
      */
-    // ManyToMany avec Permission
-    #[ORM\ManyToMany(targetEntity: Permission::class, inversedBy: 'roles')]
-    #[ORM\JoinTable(name: 'role_permission')]
+    // Relation ManyToMany avec Permission
+    #[ORM\ManyToMany(targetEntity: Permission::class, mappedBy: 'roles')]
     private Collection $permissions;
 
     /**
      * @var Collection<int, Utilisateur>
      */
-    // ManyToMany avec Utilisateur
-    #[ORM\ManyToMany(targetEntity: Utilisateur::class, mappedBy: 'roles')]
-    private Collection $user_role;
+    // Relation ManyToMany avec Utilisateur (inversé de celle définie dans Utilisateur)
+    #[ORM\ManyToMany(targetEntity: Utilisateur::class, mappedBy: 'roleEntities')]
+    private Collection $utilisateurs;
 
     public function __construct()
     {
         $this->permissions = new ArrayCollection();
-        $this->user_role = new ArrayCollection();
+        $this->utilisateurs = new ArrayCollection();
     }
 
     // ---------------------------------------------
@@ -66,7 +65,6 @@ class Role
     public function setNomRole(string $nomRole): static
     {
         $this->nomRole = $nomRole;
-
         return $this;
     }
 
@@ -78,7 +76,6 @@ class Role
     public function setDescription(?string $description): static
     {
         $this->description = $description;
-
         return $this;
     }
 
@@ -95,41 +92,68 @@ class Role
         if (!$this->permissions->contains($permission)) {
             $this->permissions->add($permission);
         }
-
         return $this;
     }
 
     public function removePermission(Permission $permission): static
     {
         $this->permissions->removeElement($permission);
-
         return $this;
     }
 
     /**
-     * @return Collection<int, Utilisateur>
+     * Retourne la collection d'utilisateurs associés à ce rôle.
      */
-    public function getUserRole(): Collection
+    public function getUtilisateurs(): Collection
     {
-        return $this->user_role;
+        return $this->utilisateurs;
     }
 
-    public function addUserRole(Utilisateur $userRole): static
+    /**
+     * Ajoute un utilisateur à ce rôle.
+     */
+    public function addUtilisateur(Utilisateur $utilisateur): static
     {
-        if (!$this->user_role->contains($userRole)) {
-            $this->user_role->add($userRole);
-            $userRole->addRole($this);
+        if (!$this->utilisateurs->contains($utilisateur)) {
+            $this->utilisateurs->add($utilisateur);
+            $utilisateur->addRoleEntity($this);
         }
-
         return $this;
     }
 
-    public function removeUserRole(Utilisateur $userRole): static
+    /**
+     * Supprime un utilisateur de ce rôle.
+     */
+    public function removeUtilisateur(Utilisateur $utilisateur): static
     {
-        if ($this->user_role->removeElement($userRole)) {
-            $userRole->removeRole($this);
+        if ($this->utilisateurs->removeElement($utilisateur)) {
+            $utilisateur->removeRoleEntity($this);
         }
+        return $this;
+    }
+}
 
+class Utilisateur
+{
+    #[ORM\ManyToMany(targetEntity: Role::class, inversedBy: 'utilisateurs')]
+    private Collection $roles;
+
+    public function __construct()
+    {
+        $this->roles = new ArrayCollection();
+    }
+
+    public function addRole(Role $role): static
+    {
+        if (!$this->roles->contains($role)) {
+            $this->roles->add($role);
+        }
+        return $this;
+    }
+
+    public function removeRole(Role $role): static
+    {
+        $this->roles->removeElement($role);
         return $this;
     }
 }

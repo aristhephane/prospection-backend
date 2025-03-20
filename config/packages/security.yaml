@@ -39,9 +39,18 @@ security:
 
     # Easy way to control access for large sections of your site
     # Note: Only the *first* access control that matches will be used
+    // Conrole d'accès  aux différentes routes  de l'application    
     access_control:
-        # - { path: ^/admin, roles: ROLE_ADMIN }
-        # - { path: ^/profile, roles: ROLE_USER }
+        - { path: ^/login$, roles: PUBLIC_ACCESS }
+        - { path: ^/reset-password, roles: PUBLIC_ACCESS }
+        - { path: ^/utilisateurs, roles: ROLE_ADMIN }
+        - { path: ^/dashboard, roles: ROLE_USER }
+        - { path: ^/fiches, roles: ROLE_USER }
+        - { path: ^/entreprises, roles: ROLE_USER }
+        - { path: ^/recherche, roles: ROLE_USER }
+        - { path: ^/listing, roles: ROLE_USER }
+        - { path: ^/historique, roles: ROLE_ADMIN }
+        - { path: ^/notifications, roles: ROLE_USER }
         - { path: ^/entreprises/\d+/supprimer, roles: ROLE_ADMIN }
         - { path: ^/entreprises/export, roles: ROLE_ADMIN }
 

@@ -7,17 +7,20 @@ use App\Entity\FicheEntreprise;
 use App\Entity\HistoriqueModification;
 use App\Form\FicheEntrepriseType;
 use App\Service\PdfGenerator; // Service pour générer des PDF
+use App\Service\HistoriqueService;
 use App\Repository\FicheEntrepriseRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 #[Route('/fiches')]
+#[IsGranted('ROLE_USER')]
 class FicheEntrepriseController extends AbstractController
 {
-     /**
+    /**
      * Affiche la liste de toutes les fiches entreprises.
      */
     #[Route('/', name: 'fiche_index', methods: ['GET'])]
@@ -78,8 +81,12 @@ class FicheEntrepriseController extends AbstractController
      * Modifie une fiche entreprise et enregistre l'historique de la modification.
      */
     #[Route('/{id}/modifier', name: 'fiche_edit', methods: ['GET', 'POST'])]
-    public function edit(Request $request, FicheEntreprise $fiche, EntityManagerInterface $entityManager): Response
-    {
+    public function edit(
+        Request $request,
+        FicheEntreprise $fiche,
+        EntityManagerInterface $entityManager,
+        HistoriqueService $historiqueService
+    ): Response {
         $form = $this->createForm(FicheEntrepriseType::class, $fiche);
         $form->handleRequest($request);
 
@@ -88,13 +95,8 @@ class FicheEntrepriseController extends AbstractController
                 // Met à jour la date de modification
                 $fiche->setDateModification(new \DateTime());
 
-                // Crée un enregistrement dans l'historique des modifications
-                $historique = new HistoriqueModification();
-                $historique->setDateModification(new \DateTime());
-                $historique->setDetailsModification('Modification effectuée par ' . $this->getUser()->getUserIdentifier());
-                $historique->setFicheEntreprise($fiche);
-                $historique->setUtilisateur($this->getUser());
-                $entityManager->persist($historique);
+                // Utilisation du service pour enregistrer l'historique
+                $historiqueService->enregistrerModification($fiche);
 
                 $entityManager->flush();
                 $this->addFlash('success', 'Fiche modifiée et historique enregistré.');
@@ -109,7 +111,7 @@ class FicheEntrepriseController extends AbstractController
         ]);
     }
 
-     /**
+    /**
      * Valide les modifications d'une fiche entreprise.
      * On suppose que l'entité FicheEntreprise possède un champ "valide" (booléen).
      */
@@ -152,9 +154,9 @@ class FicheEntrepriseController extends AbstractController
      * Affiche l'historique des modifications d'une fiche entreprise.
      */
     #[Route('/{id}/historique', name: 'fiche_historique')]
-    public function historique(FicheEntreprise $fiche): Response
+    public function historique(FicheEntreprise $fiche, HistoriqueService $historiqueService): Response
     {
-        $historiques = $fiche->getHistoriqueModification();
+        $historiques = $historiqueService->getHistoriqueFiche($fiche);
         return $this->render('fiche/historique.html.twig', [
             'fiche' => $fiche,
             'historiques' => $historiques,

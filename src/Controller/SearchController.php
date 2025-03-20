@@ -9,8 +9,10 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 #[Route('/recherche')]
+#[IsGranted('ROLE_USER')] // Ajoute une vérification globale pour toutes les méthodes du contrôleur
 class SearchController extends AbstractController
 {
     /**
@@ -18,8 +20,8 @@ class SearchController extends AbstractController
      */
     #[Route('/', name: 'search_index', methods: ['GET'])]
     public function index(
-        Request $request, 
-        EntrepriseRepository $entrepriseRepo, 
+        Request $request,
+        EntrepriseRepository $entrepriseRepo,
         FicheEntrepriseRepository $ficheRepo,
         PaginatorInterface $paginator
     ): Response {
@@ -42,14 +44,14 @@ class SearchController extends AbstractController
 
             // Pagination pour éviter un affichage trop long
             $paginationEntreprises = $paginator->paginate(
-                $queryEntreprises, 
-                $request->query->getInt('page_entreprises', 1), 
+                $queryEntreprises,
+                $request->query->getInt('page_entreprises', 1),
                 20
             );
 
             $paginationFiches = $paginator->paginate(
-                $queryFiches, 
-                $request->query->getInt('page_fiches', 1), 
+                $queryFiches,
+                $request->query->getInt('page_fiches', 1),
                 20
             );
 

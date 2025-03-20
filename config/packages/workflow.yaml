@@ -4,9 +4,9 @@ framework:
             type: state_machine
             supports:
                 - App\Entity\FicheEntreprise
-            initial_place: nouveau
+            initial_marking: nouveau
             marking_store:
-                type: property
+                type: method
                 property: statut
             places:
                 - nouveau

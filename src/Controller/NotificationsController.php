@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Entity\Notification;
 use App\Repository\NotificationRepository;
+use App\Service\NotificationService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -18,13 +19,16 @@ class NotificationsController extends AbstractController
 {
     private EntityManagerInterface $entityManager;
     private NotificationRepository $notificationRepository;
+    private NotificationService $notificationService;
 
     public function __construct(
         EntityManagerInterface $entityManager,
-        NotificationRepository $notificationRepository
+        NotificationRepository $notificationRepository,
+        NotificationService $notificationService
     ) {
         $this->entityManager = $entityManager;
         $this->notificationRepository = $notificationRepository;
+        $this->notificationService = $notificationService;
     }
 
     /**

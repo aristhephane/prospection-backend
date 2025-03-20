@@ -1,0 +1,77 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Détail de la modification{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <link rel="stylesheet" href="{{ asset('css/historique.css') }}">
+{% endblock %}
+
+{% block body %}
+    <div class="container mt-4">
+        <h1>Détail de la modification</h1>
+        
+        <div class="card mb-4">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Informations générales</h5>
+                    <span class="badge 
+                        {% if historique.action == 'CREATE' %}bg-success{% endif %}
+                        {% if historique.action == 'UPDATE' %}bg-primary{% endif %}
+                        {% if historique.action == 'DELETE' %}bg-danger{% endif %}
+                    ">
+                        {{ historique.action }}
+                    </span>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>Date :</strong> {{ historique.dateModification|date('d/m/Y H:i:s') }}</p>
+                        <p><strong>Utilisateur :</strong> {{ historique.utilisateur ? historique.utilisateur.nom ~ ' ' ~ historique.utilisateur.prenom : 'Système' }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Entité :</strong> {{ historique.entite }}</p>
+                        <p><strong>ID Entité :</strong> {{ historique.entiteId }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Modifications</h5>
+            </div>
+            <div class="card-body">
+                {% if historique.donnees %}
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Champ</th>
+                                    <th>Ancienne valeur</th>
+                                    <th>Nouvelle valeur</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for champ, valeurs in historique.donnees %}
+                                    <tr>
+                                        <td>{{ champ }}</td>
+                                        <td class="old-value">{{ valeurs.old is defined ? valeurs.old|e : '-' }}</td>
+                                        <td class="new-value">{{ valeurs.new is defined ? valeurs.new|e : '-' }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="alert alert-info">Aucune donnée détaillée disponible.</div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="d-flex justify-content-between">
+            <a href="{{ path('historique_index') }}" class="btn btn-secondary">Retour à la liste</a>
+        </div>
+    </div>
+{% endblock %}

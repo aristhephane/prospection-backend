@@ -1,0 +1,63 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Historique des modifications{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <link rel="stylesheet" href="{{ asset('css/historique.css') }}">
+{% endblock %}
+
+{% block body %}
+    <div class="container mt-4">
+        <h1>Historique des modifications</h1>
+        
+        {% for message in app.flashes('error') %}
+            <div class="alert alert-danger">
+                {{ message }}
+            </div>
+        {% endfor %}
+        
+        {% if modifications is empty %}
+            <div class="alert alert-info">Aucune modification n'a été enregistrée.</div>
+        {% else %}
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Utilisateur</th>
+                            <th>Entité</th>
+                            <th>Action</th>
+                            <th>Détails</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for modification in modifications %}
+                            <tr>
+                                <td>{{ modification.dateModification|date('d/m/Y H:i:s') }}</td>
+                                <td>{{ modification.utilisateur ? modification.utilisateur.nom ~ ' ' ~ modification.utilisateur.prenom : 'Système' }}</td>
+                                <td>{{ modification.entite|e }}</td>
+                                <td>
+                                    <span class="badge 
+                                        {% if modification.action == 'CREATE' %}bg-success{% endif %}
+                                        {% if modification.action == 'UPDATE' %}bg-primary{% endif %}
+                                        {% if modification.action == 'DELETE' %}bg-danger{% endif %}
+                                    ">
+                                        {{ modification.action }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <a href="{{ path('historique_show', {'id': modification.id}) }}" class="btn btn-sm btn-info">
+                                        Voir les détails
+                                    </a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% endif %}
+        
+        <a href="{{ path('dashboard') }}" class="btn btn-secondary">Retour au tableau de bord</a>
+    </div>
+{% endblock %}

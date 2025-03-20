@@ -1,0 +1,47 @@
+/* Styles pour les pages d'historique */
+
+.table-responsive {
+  overflow-x: auto;
+}
+
+.badge {
+  font-size: 0.85rem;
+  padding: 0.4rem 0.6rem;
+}
+
+/* Styles pour les badges d'action */
+.badge.bg-success {
+  background-color: #28a745;
+}
+
+.badge.bg-primary {
+  background-color: #007bff;
+}
+
+.badge.bg-danger {
+  background-color: #dc3545;
+}
+
+/* Styles pour la page de détails */
+.card {
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+  margin-bottom: 1.5rem;
+}
+
+.card-header {
+  background-color: rgba(0, 0, 0, 0.03);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+/* Styles pour la table de comparaison */
+.old-value {
+  background-color: #ffecec;
+  font-family: monospace;
+  white-space: pre-wrap;
+}
+
+.new-value {
+  background-color: #e6ffe6;
+  font-family: monospace;
+  white-space: pre-wrap;
+}

@@ -16,9 +16,11 @@ class ProspectionWorkflowSubscriber implements EventSubscriberInterface
 {
   public static function getSubscribedEvents(): array
   {
-    // On écoute l’événement de transition afin d'intervenir à chaque changement d’état.
+    // On écoute l'événement de transition afin d'intervenir à chaque changement d'état.
     return [
       WorkflowEvents::TRANSITION => 'onTransition',
+      WorkflowEvents::ENTERED => 'onEntered',
+      WorkflowEvents::COMPLETED => 'onCompleted',
     ];
   }
 
@@ -37,14 +39,43 @@ class ProspectionWorkflowSubscriber implements EventSubscriberInterface
         // Transition de "nouveau" vers "en_cours"
         $fiche->setStatut('en_cours');
         break;
-      case 'valider':
-        // Transition de "en_cours" vers "validé"
-        $fiche->setStatut('validé');
+      case 'contacter':
+        $fiche->setStatut('contacté');
         break;
-      case 'archiver':
-        // Transition de "validé" vers "archivé"
-        $fiche->setStatut('archivé');
+      case 'planifier':
+        $fiche->setStatut('rendez_vous');
         break;
+      case 'conclure':
+        $fiche->setStatut('conclu');
+        break;
+      case 'rejeter':
+        $fiche->setStatut('rejeté');
+        break;
+      // Ajoutez d'autres transitions selon votre workflow
+    }
+  }
+
+  public function onEntered(Event $event): void
+  {
+    $fiche = $event->getSubject();
+    if (!$fiche instanceof FicheEntreprise) {
+      return;
+    }
+
+    // Mise à jour de la date de dernière modification
+    $fiche->setUpdatedAt(new \DateTime());
+  }
+
+  public function onCompleted(Event $event): void
+  {
+    $fiche = $event->getSubject();
+    if (!$fiche instanceof FicheEntreprise) {
+      return;
+    }
+
+    // Actions à effectuer une fois que le workflow est complété
+    if ($fiche->getStatut() === 'conclu') {
+      // Par exemple, envoyer une notification ou créer une nouvelle tâche
     }
   }
 }

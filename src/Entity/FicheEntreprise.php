@@ -10,6 +10,7 @@ use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: FicheEntrepriseRepository::class)]
+#[ORM\HasLifecycleCallbacks]
 class FicheEntreprise
 {
     #[ORM\Id]
@@ -66,6 +67,15 @@ class FicheEntreprise
 
     #[ORM\Column(length: 50)]
     private ?string $statut = 'nouveau';
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $currentPlace = 'nouveau';
+
+    #[ORM\Column]
+    private ?\DateTimeImmutable $createdAt = null;
+
+    #[ORM\Column]
+    private ?\DateTime $updatedAt = null;
 
     public function __construct()
     {
@@ -187,6 +197,55 @@ class FicheEntreprise
         $this->statut = $statut;
 
         return $this;
+    }
+
+    public function getCurrentPlace(): ?string
+    {
+        return $this->currentPlace;
+    }
+
+    public function setCurrentPlace(?string $currentPlace): self
+    {
+        $this->currentPlace = $currentPlace;
+
+        return $this;
+    }
+
+    public function getCreatedAt(): ?\DateTimeImmutable
+    {
+        return $this->createdAt;
+    }
+
+    public function setCreatedAt(\DateTimeImmutable $createdAt): self
+    {
+        $this->createdAt = $createdAt;
+
+        return $this;
+    }
+
+    public function getUpdatedAt(): ?\DateTime
+    {
+        return $this->updatedAt;
+    }
+
+    public function setUpdatedAt(\DateTime $updatedAt): self
+    {
+        $this->updatedAt = $updatedAt;
+
+        return $this;
+    }
+
+    #[ORM\PrePersist]
+    public function setCreatedAtValue(): void
+    {
+        $this->createdAt = new \DateTimeImmutable();
+        $this->updatedAt = new \DateTime();
+    }
+
+    #[ORM\PreUpdate]
+    public function setUpdatedAtValue(): void
+    {
+        $this->updatedAt = new \DateTime();
     }
 
     /**

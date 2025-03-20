@@ -19,6 +19,11 @@ services:
             - '../src/DependencyInjection/'
             - '../src/Entity/'
             - '../src/Kernel.php'
+            
+    # Injection explicite du workflow dans le contrôleur de prospection
+    App\Controller\ProspectionController:
+        arguments:
+            $prospectionWorkflow: '@workflow.prospection'
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones

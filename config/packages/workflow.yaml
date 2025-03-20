@@ -1,25 +1,35 @@
 framework:
     workflows:
         prospection:
-            type: state_machine
+            type: 'workflow'  # Modification de 'state_machine' à 'workflow'
+            audit_trail:
+                enabled: true
+            marking_store:
+                type: 'method'
+                property: 'currentPlace'
             supports:
                 - App\Entity\FicheEntreprise
             initial_marking: nouveau
-            marking_store:
-                type: method
-                property: statut
             places:
                 - nouveau
                 - en_cours
-                - validé
-                - archivé
+                - contacté
+                - rendez_vous
+                - conclu
+                - rejeté
             transitions:
                 demarrer:
                     from: nouveau
                     to: en_cours
-                valider:
+                contacter:
                     from: en_cours
-                    to: validé
-                archiver:
-                    from: validé
-                    to: archivé
+                    to: contacté
+                planifier:
+                    from: contacté
+                    to: rendez_vous
+                conclure:
+                    from: rendez_vous
+                    to: conclu
+                rejeter:
+                    from: [nouveau, en_cours, contacté, rendez_vous]
+                    to: rejeté

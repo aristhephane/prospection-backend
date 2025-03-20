@@ -15,6 +15,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Symfony\Component\Workflow\WorkflowInterface;
 
 #[Route('/fiches')]
 #[IsGranted('ROLE_USER')]
@@ -178,5 +179,27 @@ class FicheEntrepriseController extends AbstractController
             $this->addFlash('success', 'Commentaire ajouté.');
         }
         return $this->redirectToRoute('fiche_show', ['id' => $fiche->getId()]);
+    }
+
+    #[Route('/{id}/transition/{transition}', name: 'app_fiche_entreprise_transition')]
+    public function transition(
+        Request $request,
+        FicheEntreprise $ficheEntreprise,
+        string $transition,
+        WorkflowInterface $prospectionWorkflow
+    ): Response {
+        try {
+            if ($prospectionWorkflow->can($ficheEntreprise, $transition)) {
+                $prospectionWorkflow->apply($ficheEntreprise, $transition);
+                $this->getDoctrine()->getManager()->flush();
+                $this->addFlash('success', 'Transition effectuée avec succès.');
+            } else {
+                $this->addFlash('error', 'Cette transition n\'est pas possible dans l\'état actuel.');
+            }
+        } catch (\Exception $e) {
+            $this->addFlash('error', $e->getMessage());
+        }
+
+        return $this->redirectToRoute('app_fiche_entreprise_show', ['id' => $ficheEntreprise->getId()]);
     }
 }

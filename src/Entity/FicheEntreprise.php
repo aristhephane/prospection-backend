@@ -23,7 +23,7 @@ class FicheEntreprise
     #[Assert\NotBlank(message: "La date de visite est obligatoire.")]
     #Assert\LessThanOrEqual("today", message: "La date de visite ne peut pas être dans le futur.")]
     #[Assert\LessThanOrEqual("+1 year", message: "La date de visite ne peut pas être dans plus d'un an.")]
-    #[Assert\Type("\DateTimeInterface")] 
+    #[Assert\Type("\DateTimeInterface")]
     private ?\DateTimeInterface $dateVisite = null;
 
     // Commentaires optionnels, max 1000 caractères
@@ -42,7 +42,7 @@ class FicheEntreprise
     #[Assert\Type("\DateTimeInterface")]
     private ?\DateTimeInterface $dateModification = null;
 
-     /**
+    /**
      * @ORM\Column(type="boolean")
      */
     private $valide;
@@ -63,6 +63,9 @@ class FicheEntreprise
      */
     #[ORM\OneToMany(targetEntity: HistoriqueModification::class, mappedBy: 'ficheEntreprise')]
     private Collection $historiqueModification;
+
+    #[ORM\Column(length: 50)]
+    private ?string $statut = 'nouveau';
 
     public function __construct()
     {
@@ -170,6 +173,18 @@ class FicheEntreprise
     public function setValide(bool $valide): self
     {
         $this->valide = $valide;
+
+        return $this;
+    }
+
+    public function getStatut(): ?string
+    {
+        return $this->statut;
+    }
+
+    public function setStatut(string $statut): self
+    {
+        $this->statut = $statut;
 
         return $this;
     }

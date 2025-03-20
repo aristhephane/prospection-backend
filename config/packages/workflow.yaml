@@ -1,0 +1,39 @@
+framework:
+    workflows:
+        prospection:
+            type: 'state_machine'
+            audit_trail:
+                enabled: true
+            marking_store:
+                type: 'method'
+                property: 'statut'
+            supports:
+                - App\Entity\FicheEntreprise
+            initial_marking: nouveau
+            places:
+                - nouveau
+                - contact_pris
+                - rendez_vous
+                - devis_envoye
+                - contrat_signe
+                - refus
+                - archive
+            transitions:
+                contacter:
+                    from: nouveau
+                    to: contact_pris
+                planifier_rdv:
+                    from: contact_pris
+                    to: rendez_vous
+                envoyer_devis:
+                    from: rendez_vous
+                    to: devis_envoye
+                signer_contrat:
+                    from: devis_envoye
+                    to: contrat_signe
+                refuser:
+                    from: [contact_pris, rendez_vous, devis_envoye]
+                    to: refus
+                archiver:
+                    from: [contrat_signe, refus]
+                    to: archive

@@ -41,6 +41,7 @@ class ListingController extends AbstractController
             );
         } catch (\Exception $e) {
             $this->addFlash('error', 'Erreur lors du chargement de la liste.');
+            // On peut également logger l'exception ici
             $pagination = [];
         }
 
@@ -80,11 +81,44 @@ class ListingController extends AbstractController
         }
     }
 
-    public function listingFiltered(Request $request): Response
+    /**
+     * Renvoie les entreprises filtrées au format JSON.
+     */
+    #[Route('/filtered', name: 'listing_filtered', methods: ['GET'])]
+    public function listingFiltered(Request $request, EntrepriseRepository $entrepriseRepo): Response
     {
-        // ...existing code...
+        $filters = [
+            'nom' => $request->query->get('name'),
+            'secteurActivite' => $request->query->get('sector'),
+            'tailleEntreprise' => $request->query->get('size'),
+            'dateCreation' => $request->query->get('date'),
+        ];
 
-        // Assurez-vous qu'il y a un retour de réponse dans tous les cas
+        try {
+            // Recherche des entreprises filtrées
+            $query = $entrepriseRepo->searchEntreprises($filters);
+            $entreprises = $query->getResult();
+
+            // Transformation des entités en tableau de données
+            $data = [];
+            foreach ($entreprises as $entreprise) {
+                $data[] = [
+                    'id' => $entreprise->getId(),
+                    'nom' => $entreprise->getNom(),
+                    'secteurActivite' => $entreprise->getSecteurActivite(),
+                    'tailleEntreprise' => $entreprise->getTailleEntreprise(),
+                    'dateCreation' => $entreprise->getDateCreation()
+                        ? $entreprise->getDateCreation()->format('Y-m-d')
+                        : null,
+                ];
+            }
+        } catch (\Exception $e) {
+            return $this->json([
+                'success' => false,
+                'message' => 'Erreur lors du filtrage des entreprises.'
+            ]);
+        }
+
         return $this->json([
             'success' => true,
             'data' => $data

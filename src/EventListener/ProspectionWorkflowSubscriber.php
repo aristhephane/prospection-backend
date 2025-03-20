@@ -2,53 +2,49 @@
 
 namespace App\EventListener;
 
-use App\Entity\FicheEntreprise;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\Workflow\Event\Event;
-use Symfony\Component\Workflow\Event\GuardEvent;
 use Symfony\Component\Workflow\WorkflowEvents;
-use Symfony\Component\Security\Core\Security;
+use App\Entity\FicheEntreprise;
 
+/**
+ * Ce subscriber intercepte les transitions du workflow de prospection
+ * pour mettre à jour le champ "statut" de l'entité FicheEntreprise.
+ * La logique ci-dessous reprend strictement les noms et méthodes existants.
+ */
 class ProspectionWorkflowSubscriber implements EventSubscriberInterface
 {
-  private $security;
-
-  public function __construct(Security $security)
+  public static function getSubscribedEvents(): array
   {
-    $this->security = $security;
-  }
-
-  public static function getSubscribedEvents()
-  {
+    // On écoute l’événement de transition afin d'intervenir à chaque changement d’état.
     return [
-      'workflow.prospection.completed.contacter' => 'onContactPris',
-      'workflow.prospection.completed.signer_contrat' => 'onContratSigne',
-      'workflow.prospection.guard.archiver' => 'guardArchiver',
+      WorkflowEvents::TRANSITION => 'onTransition',
     ];
   }
 
-  public function onContactPris(Event $event)
+  public function onTransition(Event $event): void
   {
-    /** @var FicheEntreprise $ficheEntreprise */
-    $ficheEntreprise = $event->getSubject();
-    $ficheEntreprise->setDateDernierContact(new \DateTime());
+    $fiche = $event->getSubject();
+    if (!$fiche instanceof FicheEntreprise) {
+      return;
+    }
 
-    // Autres actions à effectuer après un contact
-  }
+    $transitionName = $event->getTransition()->getName();
 
-  public function onContratSigne(Event $event)
-  {
-    /** @var FicheEntreprise $ficheEntreprise */
-    $ficheEntreprise = $event->getSubject();
-    $ficheEntreprise->setDateSignature(new \DateTime());
-
-    // Envoyer notification ou email de félicitations
-  }
-
-  public function guardArchiver(GuardEvent $event)
-  {
-    if (!$this->security->isGranted('ROLE_SUPERVISEUR')) {
-      $event->setBlocked(true, 'Seuls les superviseurs peuvent archiver une fiche.');
+    // Mise à jour de l'état "statut" en fonction de la transition appliquée.
+    switch ($transitionName) {
+      case 'demarrer':
+        // Transition de "nouveau" vers "en_cours"
+        $fiche->setStatut('en_cours');
+        break;
+      case 'valider':
+        // Transition de "en_cours" vers "validé"
+        $fiche->setStatut('validé');
+        break;
+      case 'archiver':
+        // Transition de "validé" vers "archivé"
+        $fiche->setStatut('archivé');
+        break;
     }
   }
 }

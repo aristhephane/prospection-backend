@@ -186,12 +186,13 @@ class FicheEntrepriseController extends AbstractController
         Request $request,
         FicheEntreprise $ficheEntreprise,
         string $transition,
-        WorkflowInterface $prospectionWorkflow
+        WorkflowInterface $prospectionWorkflow,
+        EntityManagerInterface $entityManager
     ): Response {
         try {
             if ($prospectionWorkflow->can($ficheEntreprise, $transition)) {
                 $prospectionWorkflow->apply($ficheEntreprise, $transition);
-                $this->getDoctrine()->getManager()->flush();
+                $entityManager->flush();
                 $this->addFlash('success', 'Transition effectuée avec succès.');
             } else {
                 $this->addFlash('error', 'Cette transition n\'est pas possible dans l\'état actuel.');

@@ -10,9 +10,6 @@ if (file_exists(dirname(__DIR__) . '/config/bootstrap.php')) {
     (new Dotenv())->bootEnv(dirname(__DIR__) . '/.env');
 }
 
-// Initialisation du noyau de test
-require dirname(__DIR__) . '/config/bootstrap.php';
-
 // Création d'une base de données de test
 passthru(sprintf(
     'php "%s/bin/console" doctrine:database:drop --force --env=test',

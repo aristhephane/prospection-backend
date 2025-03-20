@@ -7,69 +7,108 @@ use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: NotificationRepository::class)]
+#[ORM\Table(name: "notification")]
 class Notification
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
-    #[ORM\Column]
+    #[ORM\Column(type: "integer")]
     private ?int $id = null;
 
-    // Message de la notification
-    #[ORM\Column(length: 255)]
-    #[Assert\NotBlank(message: "Le message de la notification est obligatoire.")]
-    #[Assert\Length(max: 255, maxMessage: "Le message ne doit pas dépasser 255 caractères.")]
-    private ?string $message = null;
+    #[ORM\Column(type: "string", length: 255)]
+    #[Assert\NotBlank(message: "Le titre de la notification est obligatoire.")]
+    #[Assert\Length(max: 255, maxMessage: "Le titre ne doit pas dépasser 255 caractères.")]
+    private ?string $titre = null;
 
-    // Date de création de la notification
-    #[ORM\Column(type: 'datetime')]
+    #[ORM\Column(type: "text")]
+    #[Assert\NotBlank(message: "Le contenu de la notification est obligatoire.")]
+    private ?string $contenu = null;
+
+    #[ORM\Column(type: "string", length: 50)]
+    #[Assert\NotBlank(message: "Le type de la notification est obligatoire.")]
+    #[Assert\Length(max: 50, maxMessage: "Le type ne doit pas dépasser 50 caractères.")]
+    private ?string $type = null;
+
+    #[ORM\Column(type: "datetime")]
     #[Assert\NotBlank(message: "La date de création de la notification est obligatoire.")]
     #[Assert\Type("\DateTimeInterface")]
-    private ?\DateTimeInterface $dateCreated = null;
+    private ?\DateTimeInterface $createdAt = null;
 
-    // Indique si la notification a été lue
-    #[ORM\Column(type: 'boolean', options: ["default" => false])]
-    #[Assert\Type("bool", message: "Le champ doit être un booléen.")]
-    private bool $isRead = false;
-
-    // Relation ManyToOne avec Utilisateur
-    #[ORM\ManyToOne(targetEntity: Utilisateur::class, inversedBy: 'notifications')]
+    #[ORM\ManyToOne(targetEntity: Utilisateur::class, inversedBy: "notifications")]
     #[Assert\NotNull(message: "La notification doit être associée à un utilisateur.")]
     #[ORM\JoinColumn(nullable: false)]
-    private ?Utilisateur $user = null;
+    private ?Utilisateur $utilisateur = null;
+
+    #[ORM\Column(type: "boolean")]
+    private bool $isRead = false;
 
     public function __construct()
     {
-        $this->dateCreated = new \DateTime(); // Date de création automatique
+        $this->createdAt = new \DateTime(); // Date de création automatique
+        $this->isRead = false; // Par défaut, la notification n'est pas lue
     }
 
     // ---------------------------------------------
     // Getters & Setters
     // ---------------------------------------------
-    
+
     public function getId(): ?int
     {
         return $this->id;
     }
 
-    public function getMessage(): ?string
+    public function getTitre(): ?string
     {
-        return $this->message;
+        return $this->titre;
     }
 
-    public function setMessage(string $message): self
+    public function setTitre(string $titre): self
     {
-        $this->message = $message;
+        $this->titre = $titre;
         return $this;
     }
 
-    public function getDateCreated(): ?\DateTimeInterface
+    public function getContenu(): ?string
     {
-        return $this->dateCreated;
+        return $this->contenu;
     }
 
-    public function setDateCreated(\DateTimeInterface $dateCreated): self
+    public function setContenu(string $contenu): self
     {
-        $this->dateCreated = $dateCreated;
+        $this->contenu = $contenu;
+        return $this;
+    }
+
+    public function getType(): ?string
+    {
+        return $this->type;
+    }
+
+    public function setType(string $type): self
+    {
+        $this->type = $type;
+        return $this;
+    }
+
+    public function getCreatedAt(): ?\DateTimeInterface
+    {
+        return $this->createdAt;
+    }
+
+    public function setCreatedAt(\DateTimeInterface $createdAt): self
+    {
+        $this->createdAt = $createdAt;
+        return $this;
+    }
+
+    public function getUtilisateur(): ?Utilisateur
+    {
+        return $this->utilisateur;
+    }
+
+    public function setUtilisateur(?Utilisateur $utilisateur): self
+    {
+        $this->utilisateur = $utilisateur;
         return $this;
     }
 
@@ -81,17 +120,6 @@ class Notification
     public function setRead(bool $isRead): self
     {
         $this->isRead = $isRead;
-        return $this;
-    }
-
-    public function getUser(): ?Utilisateur
-    {
-        return $this->user;
-    }
-
-    public function setUser(?Utilisateur $user): self
-    {
-        $this->user = $user;
         return $this;
     }
 }

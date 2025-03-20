@@ -10,18 +10,16 @@ use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: RoleRepository::class)]
+#[ORM\Table(name: "role")]
 class Role
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
-    #[ORM\Column]
+    #[ORM\Column(type: "integer")]
     private ?int $id = null;
 
-    // Nom du rôle obligatoire (max 100 caractères)
-    #[ORM\Column(length: 100)]
-    #[Assert\NotBlank(message: "Le nom du rôle est obligatoire.")]
-    #[Assert\Length(max: 100, maxMessage: "Le nom du rôle ne doit pas dépasser 100 caractères.")]
-    private ?string $nomRole = null;
+    #[ORM\Column(type: "string", length: 255)]
+    private ?string $nom = null;
 
     // Description optionnelle, max 1000 caractères
     #[ORM\Column(type: Types::TEXT, nullable: true)]
@@ -57,14 +55,14 @@ class Role
         return $this->id;
     }
 
-    public function getNomRole(): ?string
+    public function getNom(): ?string
     {
-        return $this->nomRole;
+        return $this->nom;
     }
 
-    public function setNomRole(string $nomRole): static
+    public function setNom(string $nom): static
     {
-        $this->nomRole = $nomRole;
+        $this->nom = $nom;
         return $this;
     }
 
@@ -130,6 +128,12 @@ class Role
             $utilisateur->removeRole($this);
         }
         return $this;
+    }
+
+    // Utilisez $nom au lieu de $name
+    public function __toString(): string
+    {
+        return $this->nom ?: '';
     }
 }
 

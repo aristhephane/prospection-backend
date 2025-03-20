@@ -11,6 +11,7 @@ use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: UtilisateurRepository::class)]
+#[ORM\Table(name: "utilisateur")]
 class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
 {
     // Identifiant unique de l'utilisateur
@@ -84,7 +85,7 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
     private Collection $sessions;
 
     // Relation OneToMany avec Notification
-    #[ORM\OneToMany(targetEntity: \App\Entity\Notification::class, mappedBy: 'user')]
+    #[ORM\OneToMany(targetEntity: \App\Entity\Notification::class, mappedBy: 'utilisateur')]
     private Collection $notifications;
 
     public function __construct()
@@ -339,7 +340,7 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
     {
         if (!$this->notifications->contains($notification)) {
             $this->notifications->add($notification);
-            $notification->setUser($this);
+            $notification->setUtilisateur($this);
         }
         return $this;
     }
@@ -347,8 +348,8 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
     public function removeNotification(\App\Entity\Notification $notification): self
     {
         if ($this->notifications->removeElement($notification)) {
-            if ($notification->getUser() === $this) {
-                $notification->setUser(null);
+            if ($notification->getUtilisateur() === $this) {
+                $notification->setUtilisateur(null);
             }
         }
         return $this;

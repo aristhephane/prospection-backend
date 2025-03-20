@@ -5,27 +5,29 @@ namespace App\Service;
 use App\Entity\Notification;
 use App\Entity\Utilisateur;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Bundle\SecurityBundle\Security;
 
 class NotificationService
 {
   private EntityManagerInterface $entityManager;
+  private Security $security;
 
-  public function __construct(EntityManagerInterface $entityManager)
+  public function __construct(EntityManagerInterface $entityManager, Security $security)
   {
     $this->entityManager = $entityManager;
+    $this->security = $security;
   }
 
   /**
    * Crée une nouvelle notification pour un utilisateur
    */
-  public function creerNotification(Utilisateur $utilisateur, string $titre, string $contenu, string $type = 'info'): Notification
+  public function createNotification(Utilisateur $utilisateur, string $titre, string $contenu, string $type = 'info'): Notification
   {
     $notification = new Notification();
-    $notification->setUser($utilisateur);
     $notification->setTitre($titre);
     $notification->setContenu($contenu);
     $notification->setType($type);
-    $notification->setCreatedAt(new \DateTime());
+    $notification->setUtilisateur($utilisateur);
     $notification->setRead(false);
 
     $this->entityManager->persist($notification);
@@ -37,41 +39,42 @@ class NotificationService
   /**
    * Marque une notification comme lue
    */
-  public function marquerCommeLue(Notification $notification): void
+  public function markAsRead(Notification $notification): Notification
   {
     $notification->setRead(true);
     $this->entityManager->flush();
+
+    return $notification;
   }
 
   /**
-   * Récupère les notifications non lues d'un utilisateur
-   * @return Notification[]
+   * Récupère les notifications non lues de l'utilisateur courant
    */
-  public function getNotificationsNonLues(Utilisateur $utilisateur): array
+  public function getUnreadNotifications(): array
   {
-    return $this->entityManager->getRepository(Notification::class)
-      ->findBy(['user' => $utilisateur, 'read' => false], ['createdAt' => 'DESC']);
-  }
-
-  /**
-   * Envoie une notification à tous les administrateurs
-   * @return Notification[]
-   */
-  public function notifierAdministrateurs(string $titre, string $contenu, string $type = 'info'): array
-  {
-    $admins = $this->entityManager->getRepository(Utilisateur::class)
-      ->createQueryBuilder('u')
-      ->join('u.roles', 'r')
-      ->where('r.nom = :role')
-      ->setParameter('role', 'ROLE_ADMIN')
-      ->getQuery()
-      ->getResult();
-
-    $notifications = [];
-    foreach ($admins as $admin) {
-      $notifications[] = $this->creerNotification($admin, $titre, $contenu, $type);
+    $user = $this->security->getUser();
+    if (!$user) {
+      return [];
     }
 
-    return $notifications;
+    return $this->entityManager->getRepository(Notification::class)
+      ->findBy([
+        'utilisateur' => $user,
+        'isRead' => false
+      ], ['createdAt' => 'DESC']);
+  }
+
+  /**
+   * Récupère toutes les notifications de l'utilisateur courant
+   */
+  public function getAllNotifications(): array
+  {
+    $user = $this->security->getUser();
+    if (!$user) {
+      return [];
+    }
+
+    return $this->entityManager->getRepository(Notification::class)
+      ->findBy(['utilisateur' => $user], ['createdAt' => 'DESC']);
   }
 }

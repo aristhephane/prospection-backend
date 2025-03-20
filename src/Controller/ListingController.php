@@ -32,7 +32,7 @@ class ListingController extends AbstractController
         try {
             // Recherche des entreprises filtrées
             $query = $entrepriseRepo->searchEntreprises($filters);
-            
+
             // Pagination des résultats
             $pagination = $paginator->paginate(
                 $query,
@@ -77,6 +77,50 @@ class ListingController extends AbstractController
         } catch (\Exception $e) {
             $this->addFlash('error', 'Erreur lors de l’export des données.');
             return $this->redirectToRoute('listing_index');
+        }
+    }
+
+    public function listingFiltered(Request $request): Response
+    {
+        $data = []; // Initialize the variable
+
+        try {
+            // Récupération des filtres
+            $filters = [
+                'nom' => $request->query->get('name'),
+                'secteurActivite' => $request->query->get('sector'),
+                'tailleEntreprise' => $request->query->get('size'),
+                'dateCreation' => $request->query->get('date'),
+            ];
+
+            // Récupération du repository
+            $entrepriseRepo = $this->getDoctrine()->getRepository(\App\Entity\Entreprise::class);
+
+            // Recherche des entreprises filtrées
+            $query = $entrepriseRepo->searchEntreprises($filters);
+            $entreprises = $query->getResult();
+
+            // Préparation des données pour la réponse
+            $data = [];
+            foreach ($entreprises as $entreprise) {
+                $data[] = [
+                    'id' => $entreprise->getId(),
+                    'nom' => $entreprise->getNom(),
+                    'secteur' => $entreprise->getSecteurActivite(),
+                    'taille' => $entreprise->getTailleEntreprise(),
+                    'dateCreation' => $entreprise->getDateCreation()->format('Y-m-d'),
+                ];
+            }
+
+            return $this->json([
+                'success' => true,
+                'data' => $data
+            ]);
+        } catch (\Exception $e) {
+            return $this->json([
+                'success' => false,
+                'error' => $e->getMessage()
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 }

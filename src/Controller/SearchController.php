@@ -33,8 +33,6 @@ class SearchController extends AbstractController
             'commentaires' => $request->query->get('comment', ''),
         ];
 
-        // Récupération des résultats via le repository qui gère la logique de recherche
-
         try {
             // Recherche des entreprises
             $queryEntreprises = $entrepriseRepo->searchEntreprises($criteria);
@@ -61,10 +59,13 @@ class SearchController extends AbstractController
             $paginationFiches = [];
         }
 
-        return $this->render('search/index.html.twig', [
-            'paginationEntreprises' => $paginationEntreprises,
-            'paginationFiches' => $paginationFiches,
-            'filters' => $criteria,
+        return $this->json([
+            'success' => true,
+            'results' => [
+                'paginationEntreprises' => $paginationEntreprises ?? [],
+                'paginationFiches' => $paginationFiches ?? [],
+                'filters' => $criteria,
+            ]
         ]);
     }
 }

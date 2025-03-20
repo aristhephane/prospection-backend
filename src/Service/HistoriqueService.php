@@ -5,18 +5,21 @@ namespace App\Service;
 use App\Entity\HistoriqueModification;
 use App\Entity\FicheEntreprise;
 use App\Entity\Utilisateur;
+use App\Repository\UtilisateurRepository;
 use Doctrine\ORM\EntityManagerInterface;
-use Symfony\Component\Security\Core\Security;
+use Symfony\Bundle\SecurityBundle\Security;
 
 class HistoriqueService
 {
   private EntityManagerInterface $entityManager;
   private Security $security;
+  private UtilisateurRepository $utilisateurRepository;
 
-  public function __construct(EntityManagerInterface $entityManager, Security $security)
+  public function __construct(EntityManagerInterface $entityManager, Security $security, UtilisateurRepository $utilisateurRepository)
   {
     $this->entityManager = $entityManager;
     $this->security = $security;
+    $this->utilisateurRepository = $utilisateurRepository;
   }
 
   /**

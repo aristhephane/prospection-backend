@@ -116,7 +116,7 @@ class Role
     {
         if (!$this->utilisateurs->contains($utilisateur)) {
             $this->utilisateurs->add($utilisateur);
-            $utilisateur->addRoleEntity($this);
+            $utilisateur->addRole($this);
         }
         return $this;
     }
@@ -127,33 +127,9 @@ class Role
     public function removeUtilisateur(Utilisateur $utilisateur): static
     {
         if ($this->utilisateurs->removeElement($utilisateur)) {
-            $utilisateur->removeRoleEntity($this);
+            $utilisateur->removeRole($this);
         }
         return $this;
     }
 }
 
-class Utilisateur
-{
-    #[ORM\ManyToMany(targetEntity: Role::class, inversedBy: 'utilisateurs')]
-    private Collection $roles;
-
-    public function __construct()
-    {
-        $this->roles = new ArrayCollection();
-    }
-
-    public function addRole(Role $role): static
-    {
-        if (!$this->roles->contains($role)) {
-            $this->roles->add($role);
-        }
-        return $this;
-    }
-
-    public function removeRole(Role $role): static
-    {
-        $this->roles->removeElement($role);
-        return $this;
-    }
-}

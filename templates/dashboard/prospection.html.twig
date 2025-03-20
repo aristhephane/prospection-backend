@@ -1,8 +1,20 @@
-<h1>Suivi des Prospections Récentes</h1>
+{# filepath: /var/www/html/src/templates/dashboard/prospection.html.twig #}
+{% extends 'base.html.twig' %}
 
-<h2>Fiches entreprises créées ces 7 derniers jours</h2>
-<ul>
-    {% for fiche in fichesRecents %}
-        <li>{{ fiche.dateCreation|date("d/m/Y") }} - {{ fiche.entreprise.raisonSociale }}</li>
-    {% endfor %}
-</ul>
+{% block title %}Prospection Récente{% endblock %}
+
+{% block body %}
+    <h1>Fiches de Prospection Récentes</h1>
+
+    {% if fichesRecents is empty %}
+        <p>Aucune fiche de prospection récente trouvée.</p>
+    {% else %}
+        <ul>
+            {% for fiche in fichesRecents %}
+                <li>
+                    <strong>{{ fiche.nom }}</strong> - Créée le {{ fiche.dateCreation|date('d/m/Y') }}
+                </li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+{% endblock %}

@@ -77,6 +77,12 @@ class FicheEntreprise
     #[ORM\Column]
     private ?\DateTime $updatedAt = null;
 
+    private ?string $nom = null;
+    private ?string $email = null;
+    private ?string $telephone = null;
+    private ?string $secteur = null;
+    private ?string $notes = null;
+
     public function __construct()
     {
         $this->historiqueModification = new ArrayCollection();
@@ -275,6 +281,61 @@ class FicheEntreprise
             }
         }
 
+        return $this;
+    }
+
+    public function getNom(): ?string
+    {
+        return $this->nom;
+    }
+
+    public function setNom(?string $nom): self
+    {
+        $this->nom = $nom;
+        return $this;
+    }
+
+    public function getEmail(): ?string
+    {
+        return $this->email;
+    }
+
+    public function setEmail(?string $email): self
+    {
+        $this->email = $email;
+        return $this;
+    }
+
+    public function getTelephone(): ?string
+    {
+        return $this->telephone;
+    }
+
+    public function setTelephone(?string $telephone): self
+    {
+        $this->telephone = $telephone;
+        return $this;
+    }
+
+    public function getSecteur(): ?string
+    {
+        return $this->secteur;
+    }
+
+    public function setSecteur(?string $secteur): self
+    {
+        $this->secteur = $secteur;
+        return $this;
+    }
+
+    public function getNotes(): ?string
+    {
+        return $this->notes;
+    }
+
+    public function setNotes(?string $notes): self
+    {
+        $this->notes = $notes;
         return $this;
     }
 }

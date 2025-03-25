@@ -53,6 +53,8 @@ security:
         - { path: ^/notifications, roles: ROLE_USER }
         - { path: ^/entreprises/\d+/supprimer, roles: ROLE_ADMIN }
         - { path: ^/entreprises/export, roles: ROLE_ADMIN }
+        - { path: ^/admin, roles: ROLE_ADMIN }
+        - { path: ^/, roles: ROLE_USER }
 
 when@test:
     security:

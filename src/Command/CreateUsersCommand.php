@@ -30,19 +30,19 @@ class CreateUsersCommand extends Command
     $io = new SymfonyStyle($input, $output);
 
     // Create roles if they don't exist
-    $roleAdmin = $this->entityManager->getRepository(Role::class)->findOneBy(['nomRole' => 'ROLE_ADMIN']);
+    $roleAdmin = $this->entityManager->getRepository(Role::class)->findOneBy(['nom' => 'ROLE_ADMIN']);
     if (!$roleAdmin) {
       $roleAdmin = new Role();
-      $roleAdmin->setNomRole('ROLE_ADMIN');
+      $roleAdmin->setNom('ROLE_ADMIN');
       $roleAdmin->setDescription('Administrateur avec tous les droits');
       $this->entityManager->persist($roleAdmin);
       $io->success('Role ROLE_ADMIN created');
     }
 
-    $roleUser = $this->entityManager->getRepository(Role::class)->findOneBy(['nomRole' => 'ROLE_USER']);
+    $roleUser = $this->entityManager->getRepository(Role::class)->findOneBy(['nom' => 'ROLE_USER']);
     if (!$roleUser) {
       $roleUser = new Role();
-      $roleUser->setNomRole('ROLE_USER');
+      $roleUser->setNom('ROLE_USER');
       $roleUser->setDescription('Utilisateur standard');
       $this->entityManager->persist($roleUser);
       $io->success('Role ROLE_USER created');
@@ -57,16 +57,46 @@ class CreateUsersCommand extends Command
       $admin->setEmail('admin@example.com');
 
       // Using setPassword which will hash the password
-      $hashedPassword = $this->passwordHasher->hashPassword($admin, 'Admin123!');
+      $plainPassword = 'Admin123!';
+      $hashedPassword = $this->passwordHasher->hashPassword($admin, $plainPassword);
       $admin->setPassword($hashedPassword);
+
+      // Assurez-vous que tous les champs requis sont remplis
+      // Ces champs sont potentiellement manquants et nécessaires pour l'authentification
+      if (method_exists($admin, 'setUsername')) {
+        $admin->setUsername('admin@example.com');
+      }
+      if (method_exists($admin, 'setSalt')) {
+        $admin->setSalt(null); // Symfony 5+ n'a généralement pas besoin de sel explicite
+      }
 
       $admin->setActif(true);
       $admin->addRole($roleAdmin);
 
       $this->entityManager->persist($admin);
       $io->success('Admin user created: admin@example.com / Admin123!');
+
+      // Test de vérification du mot de passe
+      if ($this->passwordHasher->isPasswordValid($admin, $plainPassword)) {
+        $io->success('Password verification successful for admin user!');
+      } else {
+        $io->error('Password verification failed for admin user!');
+      }
     } else {
       $io->note('Admin user already exists');
+
+      // Vérifiez si le mot de passe est correct pour l'utilisateur existant
+      if ($this->passwordHasher->isPasswordValid($admin, 'Admin123!')) {
+        $io->success('Password verification successful for existing admin user!');
+      } else {
+        $io->error('Password verification failed for existing admin user!');
+
+        // Mise à jour du mot de passe si nécessaire
+        $hashedPassword = $this->passwordHasher->hashPassword($admin, 'Admin123!');
+        $admin->setPassword($hashedPassword);
+        $this->entityManager->persist($admin);
+        $io->success('Admin password updated');
+      }
     }
 
     // Create regular user
@@ -77,17 +107,45 @@ class CreateUsersCommand extends Command
       $user->setPrenom('Regular');
       $user->setEmail('user@example.com');
 
-      // Using setPassword which will hash the password
-      $hashedPassword = $this->passwordHasher->hashPassword($user, 'User123!');
+      $plainPassword = 'User123!';
+      $hashedPassword = $this->passwordHasher->hashPassword($user, $plainPassword);
       $user->setPassword($hashedPassword);
 
+      // Assurez-vous que tous les champs requis sont remplis
+      if (method_exists($user, 'setUsername')) {
+        $user->setUsername('user@example.com');
+      }
+      if (method_exists($user, 'setSalt')) {
+        $user->setSalt(null);
+      }
+
       $user->setActif(true);
-      // No need to add ROLE_USER, as it's automatically assigned by the security system
+      $user->addRole($roleUser);
 
       $this->entityManager->persist($user);
       $io->success('Regular user created: user@example.com / User123!');
+
+      // Test de vérification du mot de passe
+      if ($this->passwordHasher->isPasswordValid($user, $plainPassword)) {
+        $io->success('Password verification successful for regular user!');
+      } else {
+        $io->error('Password verification failed for regular user!');
+      }
     } else {
       $io->note('Regular user already exists');
+
+      // Vérifiez si le mot de passe est correct pour l'utilisateur existant
+      if ($this->passwordHasher->isPasswordValid($user, 'User123!')) {
+        $io->success('Password verification successful for existing regular user!');
+      } else {
+        $io->error('Password verification failed for existing regular user!');
+
+        // Mise à jour du mot de passe si nécessaire
+        $hashedPassword = $this->passwordHasher->hashPassword($user, 'User123!');
+        $user->setPassword($hashedPassword);
+        $this->entityManager->persist($user);
+        $io->success('Regular user password updated');
+      }
     }
 
     $this->entityManager->flush();

@@ -111,18 +111,46 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
     // Retourne les noms des rôles (en ajoutant ROLE_USER par défaut)
     public function getRoles(): array
     {
-        $roleNames = array_map(fn($role) => $role->getNomRole(), $this->roles->toArray());
+        $roleNames = [];
+        foreach ($this->roles as $role) {
+            // $role->getNom() renvoie typiquement "ROLE_ADMIN" ou "ROLE_USER"
+            $roleNames[] = $role->getNom();
+        }
+
+        // Ajoute ROLE_USER par défaut pour tout le monde
         $roleNames[] = 'ROLE_USER';
+
         return array_unique($roleNames);
     }
 
-    // Retourne la collection complète des entités Role associées
-    public function getRoleEntities(): Collection
+    public function getPassword(): ?string
     {
-        return $this->roles;
+        return $this->password;
     }
 
-    // Ajoute un Role à l'utilisateur et assure la réciprocité
+    public function getSalt(): ?string
+    {
+        return null; // Symfony 5+ n'utilise pas de sel explicite
+    }
+
+    public function getUsername(): string
+    {
+        return $this->email;
+    }
+
+    public function eraseCredentials(): void
+    {
+        // Efface les données sensibles si nécessaire
+    }
+
+    // Ajoute une méthode pour définir le mot de passe
+    public function setPassword(string $password): self
+    {
+        $this->password = $password;
+        return $this;
+    }
+
+    // Ajoute une méthode pour ajouter un rôle
     public function addRole(Role $role): self
     {
         if (!$this->roles->contains($role)) {
@@ -132,34 +160,13 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    // Supprime un Role de l'utilisateur et assure la réciprocité
+    // Ajoute une méthode pour supprimer un rôle
     public function removeRole(Role $role): self
     {
         if ($this->roles->removeElement($role)) {
             $role->removeUtilisateur($this);
         }
         return $this;
-    }
-
-    public function getPassword(): ?string
-    {
-        return $this->password;
-    }
-
-    // Définit le mot de passe (en le hachant)
-    public function setPassword(string $password): self
-    {
-        $this->password = password_hash($password, PASSWORD_DEFAULT);
-        return $this;
-    }
-
-    public function getSalt(): ?string
-    {
-        return null;
-    }
-
-    public function eraseCredentials(): void
-    {
     }
 
     // ---------------------------------------------

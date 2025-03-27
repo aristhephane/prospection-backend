@@ -26,14 +26,14 @@ class UtilisateurController extends AbstractController
         // Vérifie que l'utilisateur connecté possède le rôle ADMIN.
         $this->denyAccessUnlessGranted('ROLE_ADMIN');
 
-         // Récupère tous les utilisateurs de la base de données.
+        // Récupère tous les utilisateurs de la base de données.
         try {
             $utilisateurs = $utilisateurRepository->findAll();
         } catch (\Exception $e) {
             $this->addFlash('error', 'Erreur lors du chargement des utilisateurs.');
             $utilisateurs = [];
         }
-        
+
         // Rendu du template Twig 'utilisateur/index.html.twig' avec la liste des utilisateurs.
         return $this->render('utilisateur/index.html.twig', [
             'utilisateurs' => $utilisateurs,
@@ -69,9 +69,9 @@ class UtilisateurController extends AbstractController
     }
 
     /**
-    * Permet aux administrateurs d'ajouter un nouvel utilisateur.
-    * Les comptes sont créés par un administrateur.
-    */
+     * Permet aux administrateurs d'ajouter un nouvel utilisateur.
+     * Les comptes sont créés par un administrateur.
+     */
     #[Route('/ajouter', name: 'utilisateur_new', methods: ['GET', 'POST'])]
     public function new(Request $request, EntityManagerInterface $entityManager, UserPasswordHasherInterface $passwordHasher): Response
     {

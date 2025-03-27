@@ -48,6 +48,9 @@ class CreateUsersCommand extends Command
       $io->success('Role ROLE_USER created');
     }
 
+    // Assurez-vous de sauvegarder les rôles avant de les utiliser
+    $this->entityManager->flush();
+
     // Create admin user
     $admin = $this->entityManager->getRepository(Utilisateur::class)->findOneBy(['email' => 'admin@example.com']);
     if (!$admin) {
@@ -56,19 +59,9 @@ class CreateUsersCommand extends Command
       $admin->setPrenom('Super');
       $admin->setEmail('admin@example.com');
 
-      // Using setPassword which will hash the password
       $plainPassword = 'Admin123!';
       $hashedPassword = $this->passwordHasher->hashPassword($admin, $plainPassword);
       $admin->setPassword($hashedPassword);
-
-      // Assurez-vous que tous les champs requis sont remplis
-      // Ces champs sont potentiellement manquants et nécessaires pour l'authentification
-      if (method_exists($admin, 'setUsername')) {
-        $admin->setUsername('admin@example.com');
-      }
-      if (method_exists($admin, 'setSalt')) {
-        $admin->setSalt(null); // Symfony 5+ n'a généralement pas besoin de sel explicite
-      }
 
       $admin->setActif(true);
       $admin->addRole($roleAdmin);
@@ -110,14 +103,6 @@ class CreateUsersCommand extends Command
       $plainPassword = 'User123!';
       $hashedPassword = $this->passwordHasher->hashPassword($user, $plainPassword);
       $user->setPassword($hashedPassword);
-
-      // Assurez-vous que tous les champs requis sont remplis
-      if (method_exists($user, 'setUsername')) {
-        $user->setUsername('user@example.com');
-      }
-      if (method_exists($user, 'setSalt')) {
-        $user->setSalt(null);
-      }
 
       $user->setActif(true);
       $user->addRole($roleUser);

@@ -1,10 +1,9 @@
 security:
-    # https://symfony.com/doc/current/security.html#registering-the-user-hashing-passwords
     password_hashers:
-        App\Entity\Utilisateur:
-            algorithm: auto
         Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface: 'auto'
-    # https://symfony.com/doc/current/security.html#loading-the-user-the-user-provider
+        App\Entity\Utilisateur:
+            algorithm: 'auto'
+
     providers:
         app_user_provider:
             entity:
@@ -15,46 +14,31 @@ security:
         dev:
             pattern: ^/(_(profiler|wdt)|css|images|js)/
             security: false
-
+        login:
+            pattern: ^/api/login
+            stateless: true
+            json_login:
+                check_path: api_login
+                username_path: email
+                password_path: password
+                success_handler: app.jwt_authentication_success_handler
+                failure_handler: lexik_jwt_authentication.handler.authentication_failure
+        api:
+            pattern: ^/api
+            stateless: true
+            jwt: ~
         main:
-            security: true  # If you are using HTTP Basic or HTTP Digest authentication
+            lazy: true
             provider: app_user_provider
-            entry_point: form_login
-            form_login:
-                login_path: security_login
-                check_path: security_login
-                enable_csrf: true
             logout:
-                path: security_logout
-                target: /
-            remember_me:
-                secret: '%kernel.secret%'
-                lifetime: 604800  # 1 week in seconds
+                path: app_logout
 
-            # activate different ways to authenticate
-            # https://symfony.com/doc/current/security.html#the-firewall
-
-            # https://symfony.com/doc/current/security/impersonating_user.html
-            # switch_user: true
-
-    # Easy way to control access for large sections of your site
-    # Note: Only the *first* access control that matches will be used
-    # Conrole d'accès aux différentes routes de l'application    
     access_control:
-        - { path: ^/login$, roles: PUBLIC_ACCESS }
-        - { path: ^/reset-password, roles: PUBLIC_ACCESS }
-        - { path: ^/utilisateurs, roles: ROLE_ADMIN }
-        - { path: ^/dashboard, roles: ROLE_USER }
-        - { path: ^/fiches, roles: ROLE_USER }
-        - { path: ^/entreprises, roles: ROLE_USER }
-        - { path: ^/recherche, roles: ROLE_USER }
-        - { path: ^/listing, roles: ROLE_USER }
-        - { path: ^/historique, roles: ROLE_ADMIN }
-        - { path: ^/notifications, roles: ROLE_USER }
-        - { path: ^/entreprises/\d+/supprimer, roles: ROLE_ADMIN }
-        - { path: ^/entreprises/export, roles: ROLE_ADMIN }
-        - { path: ^/admin, roles: ROLE_ADMIN }
-        - { path: ^/, roles: ROLE_USER }
+        - { path: ^/api/login, roles: PUBLIC_ACCESS }
+        - { path: ^/api/auth-test, roles: PUBLIC_ACCESS }
+        - { path: ^/api/auth-status, roles: PUBLIC_ACCESS }
+        - { path: ^/api/admin, roles: ROLE_ADMIN }
+        - { path: ^/api, roles: ROLE_USER }
 
 when@test:
     security:

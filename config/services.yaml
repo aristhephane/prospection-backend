@@ -25,5 +25,19 @@ services:
         arguments:
             $prospectionWorkflow: '@workflow.prospection'
 
+    # Gestionnaire personnalisé pour l'authentification JWT
+    app.jwt_authentication_success_handler:
+        class: App\Security\JwtAuthenticationSuccessHandler
+        arguments:
+            - '@lexik_jwt_authentication.jwt_manager'
+        public: true
+        # Supprimez le tag event_listener pour éviter toute confusion
+        # et utiliser uniquement via la configuration security.yaml
+
+    # Utilitaire pour la redirection après authentification
+    App\Security\AuthenticationUtils:
+        arguments:
+            - '@router'
+
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones

@@ -8,6 +8,13 @@ doctrine:
 
         profiling_collect_backtrace: '%kernel.debug%'
         use_savepoints: true
+        logging: '%kernel.debug%'
+        profiling: '%kernel.debug%'
+        options:
+            # Optimisation MySQL/MariaDB
+            !php/const PDO::MYSQL_ATTR_FOUND_ROWS: true
+            !php/const PDO::ATTR_EMULATE_PREPARES: false
+            !php/const PDO::ATTR_PERSISTENT: true
     orm:
         auto_generate_proxy_classes: true
         enable_lazy_ghost_objects: true
@@ -26,6 +33,14 @@ doctrine:
                 alias: App
         controller_resolver:
             auto_mapping: false
+        second_level_cache:
+            enabled: true
+            region_cache_driver:
+                type: pool
+                pool: doctrine.second_level_cache_pool
+        metadata_cache_driver:
+            type: pool
+            pool: doctrine.metadata_cache_pool
 
 when@test:
     doctrine:
@@ -44,6 +59,9 @@ when@prod:
             result_cache_driver:
                 type: pool
                 pool: doctrine.result_cache_pool
+            metadata_cache_driver:
+                type: pool
+                pool: doctrine.metadata_cache_pool
 
     framework:
         cache:
@@ -52,3 +70,7 @@ when@prod:
                     adapter: cache.app
                 doctrine.system_cache_pool:
                     adapter: cache.system
+                doctrine.metadata_cache_pool:
+                    adapter: cache.system
+                doctrine.second_level_cache_pool:
+                    adapter: cache.app

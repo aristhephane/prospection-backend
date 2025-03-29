@@ -1,14 +1,12 @@
 nelmio_cors:
     defaults:
-        origin_regex: true
-        allow_origin: ['%env(CORS_ALLOW_ORIGIN)%']
-        allow_methods: ['GET', 'OPTIONS', 'POST', 'PUT', 'PATCH', 'DELETE']
-        allow_headers: ['Content-Type', 'Authorization']
-        expose_headers: ['Link']
+        allow_origin: ['http://upjv-prospection-vps.amourfoot.fr', 'http://localhost:3000', 'http://localhost:8000']
+        allow_methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH']
+        allow_headers: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin']
+        expose_headers: ['Authorization', 'Content-Length', 'X-Kuma-Revision']
         max_age: 3600
+        allow_credentials: true
     paths:
         '^/api/':
-            allow_origin: ['*']
-            allow_headers: ['*']
-            allow_methods: ['POST', 'PUT', 'GET', 'DELETE']
-            max_age: 3600
+            allow_origin: ['http://upjv-prospection-vps.amourfoot.fr', 'http://localhost:3000', 'http://localhost:8000']
+            allow_credentials: true

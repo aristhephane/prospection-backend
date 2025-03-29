@@ -16,3 +16,26 @@ dashboard:
 app_login:
     path: /login
     controller: App\Controller\SecurityController::login
+    methods: ['GET', 'POST']
+
+# Route d'authentification JWT directe
+api_login_check:
+    path: /api/login_check
+    methods: ['POST']
+
+# Route d'authentification alternative
+api_token_authenticate:
+    path: /api/token/authenticate
+    controller: App\Controller\SecurityController::apiTokenAuthenticate
+    methods: ['POST']
+
+# Endpoint de test d'authentification
+api_auth_test:
+    path: /api/auth-test
+    controller: App\Controller\SecurityController::apiAuthTest
+    methods: ['GET']
+
+api_auth_status:
+    path: /api/auth-status
+    controller: App\Controller\SecurityController::apiAuthStatus
+    methods: ['GET']

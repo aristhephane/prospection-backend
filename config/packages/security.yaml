@@ -3,6 +3,7 @@ security:
         Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface: 'auto'
         App\Entity\Utilisateur:
             algorithm: 'auto'
+            cost: 15
 
     providers:
         app_user_provider:
@@ -14,31 +15,36 @@ security:
         dev:
             pattern: ^/(_(profiler|wdt)|css|images|js)/
             security: false
+        
         login:
-            pattern: ^/api/login
+            pattern: ^/api/login_check
             stateless: true
             json_login:
-                check_path: api_login
+                check_path: /api/login_check
                 username_path: email
                 password_path: password
-                success_handler: app.jwt_authentication_success_handler
+                success_handler: lexik_jwt_authentication.handler.authentication_success
                 failure_handler: lexik_jwt_authentication.handler.authentication_failure
+
         api:
             pattern: ^/api
             stateless: true
             jwt: ~
-        main:
-            lazy: true
-            provider: app_user_provider
-            logout:
-                path: app_logout
 
     access_control:
-        - { path: ^/api/login, roles: PUBLIC_ACCESS }
+        - { path: ^/login, roles: PUBLIC_ACCESS }
+        - { path: ^/api/login_check, roles: PUBLIC_ACCESS }
+        - { path: ^/api/token/authenticate, roles: PUBLIC_ACCESS }
+        - { path: ^/api/auth/token, roles: PUBLIC_ACCESS }
         - { path: ^/api/auth-test, roles: PUBLIC_ACCESS }
         - { path: ^/api/auth-status, roles: PUBLIC_ACCESS }
+        - { path: ^/api/docs, roles: PUBLIC_ACCESS }
         - { path: ^/api/admin, roles: ROLE_ADMIN }
         - { path: ^/api, roles: ROLE_USER }
+
+    role_hierarchy:
+        ROLE_ADMIN: ROLE_USER
+        ROLE_SUPER_ADMIN: [ROLE_ADMIN, ROLE_ALLOWED_TO_SWITCH]
 
 when@test:
     security:

@@ -61,8 +61,8 @@ class SecurityController extends AbstractController
         ]);
     }
 
-    #[Route('/api/login_check', name: 'api_login_check', methods: ['POST'])]
-    public function apiLoginCheck(Request $request): JsonResponse
+    #[Route('/api/token/authenticate', name: 'api_token_authenticate', methods: ['POST'])]
+    public function apiTokenAuthenticate(Request $request): JsonResponse
     {
         try {
             $data = json_decode($request->getContent(), true);
@@ -95,6 +95,7 @@ class SecurityController extends AbstractController
                 ]
             ]);
         } catch (\Exception $e) {
+            error_log('Erreur authentification: ' . $e->getMessage());
             return $this->json([
                 'message' => 'Une erreur est survenue lors de l\'authentification: ' . $e->getMessage()
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
@@ -242,47 +243,6 @@ class SecurityController extends AbstractController
             return $this->json([
                 'error' => 'JWT debug failed',
                 'message' => 'Une erreur est survenue lors du débogage JWT'
-            ], Response::HTTP_INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    #[Route('/api/token/authenticate', name: 'api_token_authenticate', methods: ['POST'])]
-    public function apiTokenAuthenticate(Request $request): JsonResponse
-    {
-        try {
-            $data = json_decode($request->getContent(), true);
-
-            if (!$data || !isset($data['email']) || !isset($data['password'])) {
-                return $this->json([
-                    'message' => 'Email et mot de passe requis'
-                ], Response::HTTP_BAD_REQUEST);
-            }
-
-            $user = $this->entityManager->getRepository(Utilisateur::class)->findOneBy(['email' => $data['email']]);
-
-            if (!$user || !$this->passwordHasher->isPasswordValid($user, $data['password'])) {
-                return $this->json([
-                    'message' => 'Identifiants invalides'
-                ], Response::HTTP_UNAUTHORIZED);
-            }
-
-            // Générer le token JWT
-            $token = $this->jwtManager->create($user);
-
-            return $this->json([
-                'token' => $token,
-                'user' => [
-                    'id' => $user->getId(),
-                    'email' => $user->getEmail(),
-                    'roles' => $user->getRoles(),
-                    'nom' => $user->getNom(),
-                    'prenom' => $user->getPrenom()
-                ]
-            ]);
-        } catch (\Exception $e) {
-            error_log('Erreur authentification: ' . $e->getMessage());
-            return $this->json([
-                'message' => 'Une erreur est survenue lors de l\'authentification: ' . $e->getMessage()
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }

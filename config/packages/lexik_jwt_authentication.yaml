@@ -8,3 +8,7 @@ lexik_jwt_authentication:
             enabled: true
             prefix: Bearer
             name: Authorization
+    api_platform:
+        check_path: /api/login_check
+        username_path: username
+        password_path: password

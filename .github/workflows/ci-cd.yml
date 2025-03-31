@@ -82,4 +82,4 @@ jobs:
           php bin/console cache:clear
           php bin/console cache:warmup
           sudo systemctl restart php-fpm
-          sudo systemctl restart httpd 
+          sudo systemctl restart httpd

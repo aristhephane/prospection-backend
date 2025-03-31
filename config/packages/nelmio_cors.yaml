@@ -1,6 +1,6 @@
 nelmio_cors:
     defaults:
-        allow_origin: ['https://upjv-prospection-vps.amourfoot.fr', 'http://localhost:3000', 'http://localhost:8000']
+        allow_origin: ['https://upjv-prospection-vps.amourfoot.fr', 'http://upjv-prospection-vps.amourfoot.fr', 'http://localhost:3000', 'http://localhost:8000']
         allow_methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH']
         allow_headers: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin']
         expose_headers: ['Authorization', 'Content-Length', 'X-Kuma-Revision']
@@ -8,5 +8,5 @@ nelmio_cors:
         allow_credentials: true
     paths:
         '^/api/':
-            allow_origin: ['https://upjv-prospection-vps.amourfoot.fr', 'http://localhost:3000', 'http://localhost:8000']
+            allow_origin: ['https://upjv-prospection-vps.amourfoot.fr', 'http://upjv-prospection-vps.amourfoot.fr', 'http://localhost:3000', 'http://localhost:8000']
             allow_credentials: true

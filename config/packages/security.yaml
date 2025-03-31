@@ -30,6 +30,7 @@ security:
                 authenticator: lexik_jwt_authentication.security.jwt_authenticator
 
     access_control:
+        - { path: ^/login, roles: PUBLIC_ACCESS }
         - { path: ^/api/login_check, roles: PUBLIC_ACCESS }
         - { path: ^/api/token/authenticate, roles: PUBLIC_ACCESS }
         - { path: ^/api/auth/token, roles: PUBLIC_ACCESS }

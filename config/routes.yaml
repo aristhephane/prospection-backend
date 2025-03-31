@@ -39,3 +39,10 @@ api_auth_status:
     path: /api/auth-status
     controller: App\Controller\SecurityController::apiAuthStatus
     methods: ['GET']
+
+# Route d'authentification JWT clé en main en POST
+api_login:
+    path: /api/login
+    methods: ['POST']
+    defaults:
+        _controller: 'App\Controller\LoginAliasController::login'

@@ -12,6 +12,9 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Entity(repositoryClass: PermissionRepository::class)]
 class Permission
 {
+    public const PERMISSION_LECTURE = 'Lecture';
+    public const PERMISSION_ECRITURE = 'Ecriture';
+    
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
@@ -34,11 +37,11 @@ class Permission
     // ManyToMany avec Role
     #[ORM\ManyToMany(targetEntity: Role::class, inversedBy: 'permissions')]
     //  #[ORM\JoinTable(name: 'role_permission')]
-    private Collection $roles;
+    private Collection $roleEntities;
 
     public function __construct()
     {
-        $this->roles = new ArrayCollection();
+        $this->roleEntities = new ArrayCollection();
     }
 
     // ---------------------------------------------
@@ -52,15 +55,15 @@ class Permission
     /**
      * @return Collection<int, Role>
      */
-    public function getRoles(): Collection
+    public function getRoleEntities(): Collection
     {
-        return $this->roles;
+        return $this->roleEntities;
     }
 
     public function addRole(Role $role): static
     {
-        if (!$this->roles->contains($role)) {
-            $this->roles->add($role);
+        if (!$this->roleEntities->contains($role)) {
+            $this->roleEntities->add($role);
             $role->addPermission($this);
         }
 
@@ -69,7 +72,7 @@ class Permission
 
     public function removeRole(Role $role): static
     {
-        if ($this->roles->removeElement($role)) {
+        if ($this->roleEntities->removeElement($role)) {
             $role->removePermission($this);
         }
 
@@ -86,6 +89,11 @@ class Permission
         $this->nomPermission = $nomPermission;
 
         return $this;
+    }
+
+    public function setNom(string $nom): static
+    {
+        return $this->setNomPermission($nom);
     }
 
     public function getDescription(): ?string

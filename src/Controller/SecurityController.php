@@ -184,33 +184,11 @@ class SecurityController extends AbstractController
             return new JsonResponse(['authenticated' => false], Response::HTTP_OK);
         }
 
-        // Obtenir tous les rôles de l'utilisateur
-        $roles = $user->getRoles();
-        
-        // Déterminer le type d'interface (administrateur ou utilisateur)
-        $typeInterface = $user->getTypeInterface();
-
-        // Créer un tableau avec les informations essentielles de l'utilisateur
-        $userData = [
-            'id' => $user->getId(),
-            'email' => $user->getEmail(),
-            'nom' => $user->getNom(),
-            'prenom' => $user->getPrenom(),
-            'roles' => $roles,
-            'typeInterface' => $typeInterface,
-            'isAdmin' => $user->isAdministrateur(),
-        ];
-
+        $userData = $this->serializer->normalize($user, null, ['groups' => 'user:read']);
         return new JsonResponse([
             'authenticated' => true,
             'user' => $userData
         ], Response::HTTP_OK);
-    }
-
-    #[Route('/api/auth-test', name: 'api_auth_test', methods: ['GET'])]
-    public function testAuthentication(): JsonResponse
-    {
-        return new JsonResponse(['status' => 'API is working'], Response::HTTP_OK);
     }
 
     #[Route('/api/debug-jwt', name: 'api_debug_jwt')]

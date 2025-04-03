@@ -8,7 +8,7 @@ api_controllers:
     resource:
         path: ../src/Controller/Api/
         namespace: App\Controller\Api
-    prefix: /
+    prefix: /api
     type: attribute
 
 # Définir un alias de route pour éviter les erreurs de redirection
@@ -32,7 +32,7 @@ api_login_check:
 
 # Route d'authentification alternative
 api_token_authenticate:
-    path: /api/token/authenticate
+    path: /token/authenticate
     controller: App\Controller\SecurityController::apiTokenAuthenticate
     methods: ['POST']
 
@@ -49,7 +49,7 @@ api_auth_status:
 
 # Route d'authentification JWT clé en main en POST
 api_login:
-    path: /api/login
+    path: /login
     methods: ['POST']
     defaults:
         _controller: 'App\Controller\LoginAliasController::login'

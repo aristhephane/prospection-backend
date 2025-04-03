@@ -10,5 +10,5 @@ lexik_jwt_authentication:
             name: Authorization
     api_platform:
         check_path: /api/login_check
-        username_path: username
+        username_path: email
         password_path: password

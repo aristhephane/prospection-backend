@@ -28,10 +28,16 @@ class JwtDiagnosticCommand extends Command
     $io = new SymfonyStyle($input, $output);
     $io->title('Diagnostic JWT');
 
-    // Récupérer les paramètres JWT
-    $secretKeyPath = $this->params->get('lexik_jwt_authentication.secret_key');
-    $publicKeyPath = $this->params->get('lexik_jwt_authentication.public_key');
-    $passphrase = $this->params->get('lexik_jwt_authentication.pass_phrase');
+    // Récupérer les paramètres JWT depuis les variables d'environnement
+    $projectDir = $this->params->get('kernel.project_dir');
+    $secretKeyPath = str_replace('%kernel.project_dir%', $projectDir, $_ENV['JWT_SECRET_KEY'] ?? '');
+    $publicKeyPath = str_replace('%kernel.project_dir%', $projectDir, $_ENV['JWT_PUBLIC_KEY'] ?? '');
+    $passphrase = $_ENV['JWT_PASSPHRASE'] ?? null;
+
+    if (!$secretKeyPath || !$publicKeyPath || !$passphrase) {
+      $io->error('Les variables d\'environnement JWT ne sont pas toutes définies');
+      return Command::FAILURE;
+    }
 
     // Vérifier l'existence des clés
     $secretKeyExists = file_exists($secretKeyPath);

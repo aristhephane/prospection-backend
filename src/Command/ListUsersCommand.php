@@ -2,7 +2,7 @@
 
 namespace App\Command;
 
-use App\Repository\UserRepository;
+use App\Repository\UtilisateurRepository;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -17,7 +17,7 @@ class ListUsersCommand extends Command
 {
     private $userRepository;
 
-    public function __construct(UserRepository $userRepository)
+    public function __construct(UtilisateurRepository $userRepository)
     {
         parent::__construct();
         $this->userRepository = $userRepository;

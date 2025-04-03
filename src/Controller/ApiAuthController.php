@@ -32,7 +32,7 @@ class ApiAuthController extends AbstractController
     /**
      * Endpoint d'authentification direct et explicite
      */
-    #[Route('/api/auth/login', name: 'api_auth_direct_login', methods: ['POST'])]
+    #[Route('/api/auth/jwt-login', name: 'api_auth_direct_login', methods: ['POST'])]
     public function login(Request $request): JsonResponse
     {
         try {

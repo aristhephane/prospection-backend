@@ -18,25 +18,18 @@ security:
         
         api:
             pattern: ^/api
-            stateless: true
+            stateless: false
             provider: app_user_provider
-            json_login:
-                check_path: /api/login_check
-                username_path: email
-                password_path: password
-                success_handler: lexik_jwt_authentication.handler.authentication_success
-                failure_handler: lexik_jwt_authentication.handler.authentication_failure
-            jwt: 
-                authenticator: lexik_jwt_authentication.security.jwt_authenticator
+            custom_authenticator: App\Security\SessionAuthenticator
+            entry_point: App\Security\SessionAuthenticator
+            logout:
+                path: /api/auth/logout
 
     access_control:
         - { path: ^/login, roles: PUBLIC_ACCESS }
-        - { path: ^/api/login_check, roles: PUBLIC_ACCESS }
         - { path: ^/api/auth/login, roles: PUBLIC_ACCESS }
-        - { path: ^/api/token/authenticate, roles: PUBLIC_ACCESS }
-        - { path: ^/api/auth/token, roles: PUBLIC_ACCESS }
+        - { path: ^/api/auth/status, roles: PUBLIC_ACCESS }
         - { path: ^/api/auth-test, roles: PUBLIC_ACCESS }
-        - { path: ^/api/auth-status, roles: PUBLIC_ACCESS }
         - { path: ^/api/test, roles: PUBLIC_ACCESS }
         - { path: ^/api/test-info, roles: PUBLIC_ACCESS }
         - { path: ^/api/test-auth, roles: PUBLIC_ACCESS }

@@ -16,34 +16,35 @@ class Session
     private ?int $id = null;
 
     // Token de session (obligatoire, max 255 caractères, format sécurisé)
-    #[ORM\Column(length: 255)]
-    #[Assert\NotBlank(message: "Le token de session est obligatoire.")]
-    #[Assert\Length(max: 255, maxMessage: "Le token de session ne doit pas dépasser 255 caractères.")]
-    #[Assert\Regex(pattern: "/^[a-zA-Z0-9]+$/", message: "Le token de session doit être alphanumérique.")]
+    #[ORM\Column(length: 255, nullable: true)]
     private ?string $tokenSession = null;
 
-    // Date de dernière activité (obligatoire)
-    #[ORM\Column(type: Types::DATETIME_MUTABLE)]
-    #[Assert\NotBlank(message: "La date de dernière activité est obligatoire.")]
-    #[Assert\Type("\DateTimeInterface")]
-    private ?\DateTimeInterface $dateDerniereActivite = null;
-
-    // Date d'expiration de la session
-    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
-    #[Assert\Type("\DateTimeInterface")]
-    private ?\DateTimeInterface $dateExpiration = null;
-
-
     // Relation ManyToOne avec Utilisateur
-    #[ORM\ManyToOne(targetEntity: Utilisateur::class, inversedBy: 'sessions')]
+    #[ORM\ManyToOne(targetEntity: Utilisateur::class)]
     #[ORM\JoinColumn(nullable: false)]
     private ?Utilisateur $utilisateur = null;
+    
+    // Date de début de session (correspond à date_debut)
+    #[ORM\Column(type: Types::DATETIME_MUTABLE, name: "date_debut")]
+    private ?\DateTimeInterface $dateDerniereActivite = null;
+    
+    // Date de fin de session (correspond à date_fin)
+    #[ORM\Column(type: Types::DATETIME_MUTABLE, name: "date_fin", nullable: true)]
+    private ?\DateTimeInterface $dateExpiration = null;
+    
+    // Adresse IP
+    #[ORM\Column(length: 45, nullable: true, name: "ip_address")]
+    private ?string $ipAddress = null;
+    
+    // User agent
+    #[ORM\Column(type: Types::TEXT, nullable: true, name: "user_agent")]
+    private ?string $userAgent = null;
 
     public function __construct()
     {
         $this->tokenSession = bin2hex(random_bytes(32)); // Génère un token sécurisé unique
         $this->dateDerniereActivite = new \DateTime(); // Date de création automatique
-        $this->dateExpiration = (new \DateTime())->modify('+1 hour'); // Expire après 1 heure
+        $this->dateExpiration = (new \DateTime())->modify('+8 hours'); // Expire après 8 heures
     }
 
     // ---------------------------------------------
@@ -60,7 +61,7 @@ class Session
         return $this->tokenSession;
     }
 
-    public function setTokenSession(string $tokenSession): static
+    public function setTokenSession(?string $tokenSession): static
     {
         $this->tokenSession = $tokenSession;
 
@@ -100,6 +101,30 @@ class Session
     {
         $this->utilisateur = $utilisateur;
 
+        return $this;
+    }
+    
+    public function getIpAddress(): ?string
+    {
+        return $this->ipAddress;
+    }
+    
+    public function setIpAddress(?string $ipAddress): static
+    {
+        $this->ipAddress = $ipAddress;
+        
+        return $this;
+    }
+    
+    public function getUserAgent(): ?string
+    {
+        return $this->userAgent;
+    }
+    
+    public function setUserAgent(?string $userAgent): static
+    {
+        $this->userAgent = $userAgent;
+        
         return $this;
     }
 

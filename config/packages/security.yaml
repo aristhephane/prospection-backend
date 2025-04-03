@@ -18,22 +18,36 @@ security:
         
         api:
             pattern: ^/api
-            stateless: true
-            jwt: 
-                authenticator: lexik_jwt_authentication.security.jwt_authenticator
+            stateless: false
+            provider: app_user_provider
+            custom_authenticator: App\Security\SessionAuthenticator
+            entry_point: App\Security\SessionAuthenticator
+            logout:
+                path: /api/auth/logout
 
     access_control:
-        - { path: ^/api/token/authenticate, roles: PUBLIC_ACCESS }
-        - { path: ^/api/auth/token, roles: PUBLIC_ACCESS }
+        - { path: ^/login, roles: PUBLIC_ACCESS }
+        - { path: ^/api/auth/login, roles: PUBLIC_ACCESS }
+        - { path: ^/api/auth/status, roles: PUBLIC_ACCESS }
         - { path: ^/api/auth-test, roles: PUBLIC_ACCESS }
-        - { path: ^/api/auth-status, roles: PUBLIC_ACCESS }
+        - { path: ^/api/test, roles: PUBLIC_ACCESS }
+        - { path: ^/api/test-info, roles: PUBLIC_ACCESS }
+        - { path: ^/api/test-auth, roles: PUBLIC_ACCESS }
         - { path: ^/api/docs, roles: PUBLIC_ACCESS }
-        - { path: ^/api/admin, roles: ROLE_ADMIN }
+        - { path: ^/api/admin, roles: ROLE_ADMINISTRATEUR }
+        - { path: ^/api/fiches, roles: ROLE_USER }
+        - { path: ^/api/utilisateurs, roles: ROLE_ADMINISTRATEUR }
+        - { path: ^/api/rapports, roles: [ROLE_PROSPECTION, ROLE_RESPONSABLE, ROLE_ACADEMIQUE, ROLE_ORIENTATION, ROLE_ENSEIGNANT, ROLE_ADMINISTRATEUR] }
         - { path: ^/api, roles: ROLE_USER }
 
     role_hierarchy:
-        ROLE_ADMIN: ROLE_USER
-        ROLE_SUPER_ADMIN: [ROLE_ADMIN, ROLE_ALLOWED_TO_SWITCH]
+        ROLE_ADMINISTRATEUR: [ROLE_USER, ROLE_PROSPECTION, ROLE_RESPONSABLE, ROLE_ACADEMIQUE, ROLE_SECRETARIAT, ROLE_ORIENTATION, ROLE_ENSEIGNANT]
+        ROLE_PROSPECTION: [ROLE_USER]
+        ROLE_RESPONSABLE: [ROLE_USER]
+        ROLE_ACADEMIQUE: [ROLE_USER]
+        ROLE_SECRETARIAT: [ROLE_USER]
+        ROLE_ORIENTATION: [ROLE_USER]
+        ROLE_ENSEIGNANT: [ROLE_USER]
 
 when@test:
     security:

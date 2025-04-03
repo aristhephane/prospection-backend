@@ -4,6 +4,13 @@ controllers:
         namespace: App\Controller
     type: attribute
 
+api_controllers:
+    resource:
+        path: ../src/Controller/Api/
+        namespace: App\Controller\Api
+    prefix: /api
+    type: attribute
+
 # Définir un alias de route pour éviter les erreurs de redirection
 dashboard:
     path: /dashboard
@@ -25,17 +32,24 @@ api_login_check:
 
 # Route d'authentification alternative
 api_token_authenticate:
-    path: /api/token/authenticate
+    path: /token/authenticate
     controller: App\Controller\SecurityController::apiTokenAuthenticate
     methods: ['POST']
 
 # Endpoint de test d'authentification
 api_auth_test:
-    path: /api/auth-test
-    controller: App\Controller\SecurityController::apiAuthTest
+    path: /auth-test
+    controller: App\Controller\Api\SecurityController::testAuthentication
     methods: ['GET']
 
 api_auth_status:
-    path: /api/auth-status
-    controller: App\Controller\SecurityController::apiAuthStatus
+    path: /auth-status
+    controller: App\Controller\Api\SecurityController::getUserStatus
     methods: ['GET']
+
+# Route d'authentification JWT clé en main en POST
+api_login:
+    path: /login
+    methods: ['POST']
+    defaults:
+        _controller: 'App\Controller\LoginAliasController::login'

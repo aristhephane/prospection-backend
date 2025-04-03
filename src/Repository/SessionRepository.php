@@ -16,6 +16,39 @@ class SessionRepository extends ServiceEntityRepository
         parent::__construct($registry, Session::class);
     }
 
+    /**
+     * Trouve toutes les sessions expirées
+     * @return Session[] Returns an array of expired Session objects
+     */
+    public function findExpiredSessions(): array
+    {
+        $now = new \DateTime();
+        
+        return $this->createQueryBuilder('s')
+            ->andWhere('s.dateExpiration < :now')
+            ->setParameter('now', $now)
+            ->getQuery()
+            ->getResult()
+        ;
+    }
+
+    /**
+     * Trouve les sessions actives d'un utilisateur
+     */
+    public function findActiveSessionsByUser(int $userId): array
+    {
+        $now = new \DateTime();
+        
+        return $this->createQueryBuilder('s')
+            ->andWhere('s.utilisateur = :userId')
+            ->andWhere('s.dateExpiration > :now')
+            ->setParameter('userId', $userId)
+            ->setParameter('now', $now)
+            ->getQuery()
+            ->getResult()
+        ;
+    }
+
     //    /**
     //     * @return Session[] Returns an array of Session objects
     //     */

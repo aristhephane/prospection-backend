@@ -18,6 +18,8 @@ use Symfony\Component\Security\Core\Security;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Security\Http\Attribute\CurrentUser;
+use Symfony\Component\Security\Core\Exception\BadCredentialsException;
+use Symfony\Component\Serializer\SerializerInterface;
 
 class SecurityController extends AbstractController
 {
@@ -25,17 +27,20 @@ class SecurityController extends AbstractController
     private $tokenStorage;
     private $entityManager;
     private $passwordHasher;
+    private $serializer;
 
     public function __construct(
         JWTTokenManagerInterface $jwtManager,
         TokenStorageInterface $tokenStorage,
         EntityManagerInterface $entityManager,
-        UserPasswordHasherInterface $passwordHasher
+        UserPasswordHasherInterface $passwordHasher,
+        SerializerInterface $serializer
     ) {
         $this->jwtManager = $jwtManager;
         $this->tokenStorage = $tokenStorage;
         $this->entityManager = $entityManager;
         $this->passwordHasher = $passwordHasher;
+        $this->serializer = $serializer;
     }
 
     /**
@@ -155,53 +160,35 @@ class SecurityController extends AbstractController
         }
     }
 
-    #[Route('/api/auth-test', name: 'api_auth_test', methods: ['GET'])]
-    public function apiAuthTest(): JsonResponse
+    #[Route('/api/auth/token', name: 'api_auth_token', methods: ['POST'])]
+    public function getTokenUser(Request $request): JsonResponse
     {
-        /** @var Utilisateur $user */
-        $user = $this->getUser();
-        
-        if (!$user) {
-            return $this->json([
-                'message' => 'Authentification requise'
-            ], Response::HTTP_UNAUTHORIZED);
+        $data = json_decode($request->getContent(), true);
+
+        if (!isset($data['username']) || !isset($data['password'])) {
+            throw new BadCredentialsException('Username and password are required');
         }
 
-        return $this->json([
-            'message' => 'Authentification réussie',
-            'user' => [
-                'id' => $user->getId(),
-                'email' => $user->getEmail(),
-                'roles' => $user->getRoles(),
-                'nom' => $user->getNom(),
-                'prenom' => $user->getPrenom()
-            ]
-        ]);
+        // La vérification des identifiants et la génération du token sont gérées par LexikJWTAuthenticationBundle
+        // Cette route sert simplement à exposer le endpoint
+
+        return new JsonResponse(['message' => 'Use /api/login_check for authentication'], Response::HTTP_OK);
     }
 
     #[Route('/api/auth-status', name: 'api_auth_status', methods: ['GET'])]
-    public function apiAuthStatus(): JsonResponse
+    public function getUserStatus(): JsonResponse
     {
-        /** @var Utilisateur $user */
         $user = $this->getUser();
-
-        if (!$user) {
-            return $this->json([
-                'authenticated' => false,
-                'message' => 'Non authentifié'
-            ]);
+        
+        if (!$user instanceof Utilisateur) {
+            return new JsonResponse(['authenticated' => false], Response::HTTP_OK);
         }
 
-        return $this->json([
+        $userData = $this->serializer->normalize($user, null, ['groups' => 'user:read']);
+        return new JsonResponse([
             'authenticated' => true,
-            'user' => [
-                'id' => $user->getId(),
-                'email' => $user->getEmail(),
-                'roles' => $user->getRoles(),
-                'nom' => $user->getNom(),
-                'prenom' => $user->getPrenom()
-            ]
-        ]);
+            'user' => $userData
+        ], Response::HTTP_OK);
     }
 
     #[Route('/api/debug-jwt', name: 'api_debug_jwt')]
@@ -243,47 +230,6 @@ class SecurityController extends AbstractController
             return $this->json([
                 'error' => 'JWT debug failed',
                 'message' => 'Une erreur est survenue lors du débogage JWT'
-            ], Response::HTTP_INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    #[Route('/api/auth/token', name: 'api_auth_token', methods: ['POST'])]
-    public function apiAuthToken(Request $request): JsonResponse
-    {
-        try {
-            $data = json_decode($request->getContent(), true);
-
-            if (!$data || !isset($data['email']) || !isset($data['password'])) {
-                return $this->json([
-                    'message' => 'Email et mot de passe requis'
-                ], Response::HTTP_BAD_REQUEST);
-            }
-
-            $user = $this->entityManager->getRepository(Utilisateur::class)->findOneBy(['email' => $data['email']]);
-
-            if (!$user || !$this->passwordHasher->isPasswordValid($user, $data['password'])) {
-                return $this->json([
-                    'message' => 'Identifiants invalides'
-                ], Response::HTTP_UNAUTHORIZED);
-            }
-
-            // Générer le token JWT
-            $token = $this->jwtManager->create($user);
-
-            return $this->json([
-                'token' => $token,
-                'user' => [
-                    'id' => $user->getId(),
-                    'email' => $user->getEmail(),
-                    'roles' => $user->getRoles(),
-                    'nom' => $user->getNom(),
-                    'prenom' => $user->getPrenom()
-                ]
-            ]);
-        } catch (\Exception $e) {
-            error_log('Erreur authentification: ' . $e->getMessage() . ' - ' . $e->getTraceAsString());
-            return $this->json([
-                'message' => 'Une erreur est survenue lors de l\'authentification: ' . $e->getMessage()
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }

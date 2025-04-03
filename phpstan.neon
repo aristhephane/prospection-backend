@@ -1,0 +1,16 @@
+parameters:
+    level: 5
+    paths:
+        - src
+        - tests
+    symfony:
+        container_xml_path: var/cache/dev/App_KernelDevDebugContainer.xml
+    ignoreErrors:
+        - '#Call to an undefined method [a-zA-Z0-9\\]+::findOneBy\(\)#'
+        - '#Call to an undefined method [a-zA-Z0-9\\]+::findBy\(\)#'
+        - '#Call to an undefined method [a-zA-Z0-9\\]+::findAll\(\)#'
+        - '#Call to an undefined method [a-zA-Z0-9\\]+::find\(\)#'
+        - '#Call to an undefined method [a-zA-Z0-9\\]+::persist\(\)#'
+        - '#Call to an undefined method [a-zA-Z0-9\\]+::remove\(\)#'
+        - '#Call to an undefined method [a-zA-Z0-9\\]+::flush\(\)#'
+        - '#Call to an undefined method [a-zA-Z0-9\\]+::getRepository\(\)#' 

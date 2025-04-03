@@ -20,6 +20,11 @@ services:
             - '../src/Entity/'
             - '../src/Kernel.php'
             
+    # Configuration explicite des repositories
+    App\Repository\:
+        resource: '../src/Repository'
+        tags: ['doctrine.repository_service']
+            
     # Injection explicite du workflow dans le contrôleur de prospection
     App\Controller\ProspectionController:
         arguments:

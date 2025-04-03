@@ -70,7 +70,10 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
     // Relation ManyToMany avec Role (utilisation de la propriété "roles")
     #[ORM\ManyToMany(targetEntity: Role::class, inversedBy: 'utilisateurs')]
     #[ORM\JoinTable(name: 'user_role')]
-    private Collection $roles;
+    private Collection $roleEntities;
+
+    #[ORM\Column(type: 'string', length: 50)]
+    private string $typeInterface = 'utilisateur'; // Valeurs: 'administrateur' ou 'utilisateur'
 
     // Relation OneToMany avec FicheEntreprise (côté propriétaire)
     #[ORM\OneToMany(targetEntity: FicheEntreprise::class, mappedBy: 'creePar')]
@@ -90,7 +93,7 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
 
     public function __construct()
     {
-        $this->roles = new ArrayCollection();
+        $this->roleEntities = new ArrayCollection();
         $this->ficheEntreprise = new ArrayCollection();
         $this->historiqueModification = new ArrayCollection();
         $this->dateCreation = new \DateTime();
@@ -112,9 +115,9 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
     public function getRoles(): array
     {
         $roleNames = [];
-        foreach ($this->roles as $role) {
-            // $role->getNom() renvoie typiquement "ROLE_ADMIN" ou "ROLE_USER"
-            $roleNames[] = $role->getNom();
+        foreach ($this->getRoleEntities() as $role) {
+            // $role->getNom() renvoie typiquement "administrateur", "prospection", etc.
+            $roleNames[] = 'ROLE_' . strtoupper($role->getNom());
         }
 
         // Ajoute ROLE_USER par défaut pour tout le monde
@@ -153,9 +156,14 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
     // Ajoute une méthode pour ajouter un rôle
     public function addRole(Role $role): self
     {
-        if (!$this->roles->contains($role)) {
-            $this->roles->add($role);
+        if (!$this->roleEntities->contains($role)) {
+            $this->roleEntities->add($role);
             $role->addUtilisateur($this);
+            
+            // Mise à jour du typeInterface si le rôle est 'administrateur'
+            if ($role->getNom() === Role::ROLE_ADMIN) {
+                $this->setTypeInterface('administrateur');
+            }
         }
         return $this;
     }
@@ -163,7 +171,7 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
     // Ajoute une méthode pour supprimer un rôle
     public function removeRole(Role $role): self
     {
-        if ($this->roles->removeElement($role)) {
+        if ($this->roleEntities->removeElement($role)) {
             $role->removeUtilisateur($this);
         }
         return $this;
@@ -360,5 +368,36 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
             }
         }
         return $this;
+    }
+
+    /**
+     * @return Collection<int, Role>
+     */
+    public function getRoleEntities(): Collection
+    {
+        return $this->roleEntities;
+    }
+
+    public function getTypeInterface(): string
+    {
+        return $this->typeInterface;
+    }
+
+    public function setTypeInterface(string $typeInterface): self
+    {
+        if (in_array($typeInterface, ['administrateur', 'utilisateur'])) {
+            $this->typeInterface = $typeInterface;
+        }
+        return $this;
+    }
+
+    public function isAdministrateur(): bool
+    {
+        foreach ($this->roleEntities as $role) {
+            if ($role->getNom() === Role::ROLE_ADMIN) {
+                return true;
+            }
+        }
+        return false;
     }
 }
